@@ -41,11 +41,11 @@ class FirebaseString {
   static const String careItemName = 'name';
   static const String careItemType = 'careType';
 
+  // Cares
   static const String careCoordinate = 'coordinates';
   static const String carePerformed = 'carePerformed';
   static const String careInfo = 'careInfo';
-
-  // Cares
+  static const String careImages = 'imgs';
 
   // Users
 }

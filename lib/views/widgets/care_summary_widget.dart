@@ -59,6 +59,7 @@ class CareSummaryWidget extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
             // Annotation
             if (care.info != null && care.info!.isNotEmpty)
               Column(
@@ -74,17 +75,18 @@ class CareSummaryWidget extends StatelessWidget {
                   ),
                 ],
               ),
+            const SizedBox(height: 8),
             // List of completed care
-            if (care.carePerformed.isNotEmpty)
+            if (care.performed.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Wrap(
                     spacing: 2.0,
                     runSpacing: 2.0,
                     children:
-                        care.carePerformed
+                        care.performed
                             .map(
                               (careItem) => Chip(
                                 visualDensity: VisualDensity.compact,
@@ -94,12 +96,34 @@ class CareSummaryWidget extends StatelessWidget {
                                 ),
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
-
                                 label: Text(careItem),
                                 backgroundColor: Colors.teal.shade100,
                               ),
                             )
                             .toList(),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 8),
+            // Number of images
+            if (care.images.isNotEmpty)
+              Row(
+                children: [
+                  const Icon(
+                    Icons.image, // Icône d'image
+                    color: Colors.grey,
+                    size: 20,
+                  ),
+                  const SizedBox(
+                    width: 4,
+                  ), // Espacement entre l'icône et le texte
+                  Text(
+                    care.images.length.toString(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
                   ),
                 ],
               ),

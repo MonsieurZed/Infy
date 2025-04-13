@@ -4,7 +4,7 @@ import 'package:infy/data/providers/care_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:infy/data/class/care_class.dart';
 import 'package:infy/data/class/patient_class.dart';
-import 'package:infy/views/pages/nurse/care/add_edit_care_page.dart'; // Page pour éditer le soin
+import 'package:infy/views/pages/nurse/care/add_edit_care_page.dart';
 import 'package:provider/provider.dart';
 import 'package:infy/data/strings.dart';
 
@@ -90,102 +90,161 @@ class DetailCarePage extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Nom du patient
-                const Text(
-                  AppStrings.patientLabel,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Nom du patient
+                  const Text(
+                    AppStrings.patientLabel,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${patient.firstName} ${patient.lastName}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(height: 4),
+                  Text(
+                    '${patient.firstName} ${patient.lastName}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                // Date et heure du soin
-                const Text(
-                  AppStrings.dateTimeLabel,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
+                  const SizedBox(height: 16),
+                  // Date et heure du soin
+                  const Text(
+                    AppStrings.dateTimeLabel,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  DateFormat(
-                    AppConstants.fullTimeFormat,
-                    AppConstants.locale,
-                  ).format(care.timestamp.toDate()),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat(
+                      AppConstants.fullTimeFormat,
+                      AppConstants.locale,
+                    ).format(care.timestamp.toDate()),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                // Annotation
-                if (care.info != null && care.info!.isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        AppStrings.annotationLabel,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                  const SizedBox(height: 16),
+                  // Annotation
+                  if (care.info != null && care.info!.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          AppStrings.annotationLabel,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        care.info!,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
+                        const SizedBox(height: 4),
+                        Text(
+                          care.info!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-                // Liste des soins réalisés
-                if (care.carePerformed.isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        AppStrings.carePerformedLabel,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  // Liste des soins réalisés
+                  if (care.performed.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          AppStrings.carePerformedLabel,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        children:
-                            care.carePerformed
-                                .map(
-                                  (soin) => Chip(
-                                    label: Text(soin),
-                                    backgroundColor: Colors.teal.shade100,
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 4.0,
+                          children:
+                              care.performed
+                                  .map(
+                                    (soin) => Chip(
+                                      label: Text(soin),
+                                      backgroundColor: Colors.teal.shade100,
+                                    ),
+                                  )
+                                  .toList(),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 16),
+                  // Images
+                  if (care.images.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          AppStrings.images,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8.0,
+                          runSpacing: 8.0,
+                          children:
+                              care.images.entries.map((entry) {
+                                final url = entry.key;
+                                return GestureDetector(
+                                  onTap: () {
+                                    // Affiche l'URL de l'image dans une boîte de dialogue
+                                    showDialog(
+                                      context: context,
+                                      builder:
+                                          (context) => AlertDialog(
+                                            content: Image.network(
+                                              entry.value,
+                                              fit: BoxFit.cover,
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () =>
+                                                        Navigator.pop(context),
+                                                child: const Text('Fermer'),
+                                              ),
+                                            ],
+                                          ),
+                                    );
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    child: Image.network(
+                                      url,
+                                      height: 100,
+                                      width: 100,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
-                                )
-                                .toList(),
-                      ),
-                    ],
-                  ),
-              ],
+                                );
+                              }).toList(),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
             ),
           ),
         ),

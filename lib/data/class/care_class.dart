@@ -7,7 +7,8 @@ class Care {
   final String patientId;
   final Timestamp timestamp;
   final Map<String, double> coordinates;
-  final List<String> carePerformed;
+  final List<String> performed;
+  final Map<String, String> images;
   final String? info;
 
   Care({
@@ -16,7 +17,8 @@ class Care {
     required this.patientId,
     required this.timestamp,
     required this.coordinates,
-    required this.carePerformed,
+    required this.performed,
+    required this.images,
     this.info,
   });
 
@@ -29,9 +31,8 @@ class Care {
       coordinates: Map<String, double>.from(
         json[FirebaseString.careCoordinate] ?? {},
       ),
-      carePerformed: List<String>.from(
-        json[FirebaseString.carePerformed] ?? [],
-      ),
+      performed: List<String>.from(json[FirebaseString.carePerformed] ?? []),
+      images: Map<String, String>.from(json[FirebaseString.careImages] ?? {}),
       info: json[FirebaseString.careInfo] as String?,
     );
   }
@@ -42,7 +43,8 @@ class Care {
       FirebaseString.patientId: patientId,
       FirebaseString.timestamp: timestamp,
       FirebaseString.careCoordinate: coordinates,
-      FirebaseString.carePerformed: carePerformed,
+      FirebaseString.carePerformed: performed,
+      FirebaseString.careImages: images,
       FirebaseString.careInfo: info,
     };
   }
@@ -53,7 +55,8 @@ class Care {
     required String patientId,
     required Timestamp timestamp,
     required Map<String, double> coordinates,
-    required List<String> carePerformed,
+    required List<String> performed,
+    required Map<String, String> images,
     required List<String> photos,
     String? info,
   }) async {
@@ -63,7 +66,8 @@ class Care {
       patientId: patientId,
       timestamp: timestamp,
       coordinates: coordinates,
-      carePerformed: carePerformed,
+      performed: performed,
+      images: images,
       info: info,
     );
   }
@@ -74,8 +78,8 @@ class Care {
     String? patientId,
     Timestamp? timestamp,
     Map<String, double>? coordinates,
-    List<String>? carePerformed,
-    List<String>? photos,
+    List<String>? performed,
+    Map<String, String>? images,
     String? info,
   }) {
     return Care(
@@ -84,7 +88,8 @@ class Care {
       patientId: patientId ?? this.patientId,
       timestamp: timestamp ?? this.timestamp,
       coordinates: coordinates ?? this.coordinates,
-      carePerformed: carePerformed ?? this.carePerformed,
+      performed: performed ?? this.performed,
+      images: images ?? this.images,
       info: info ?? this.info,
     );
   }

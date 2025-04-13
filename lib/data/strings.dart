@@ -143,4 +143,6 @@ class AppStrings {
   static const String pleaseEnterPatientCode = 'Please enter the patient code.';
   static const String patientCodeSizeIncorrect =
       'The patient code must be 9 characters long.';
+
+  static const String images = 'Images';
 }

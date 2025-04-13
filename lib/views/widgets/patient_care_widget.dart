@@ -44,7 +44,7 @@ class PatientCareWidget extends StatelessWidget {
               ),
             const SizedBox(height: 8),
             // Line 4: List of completed care
-            if (care.carePerformed.isNotEmpty)
+            if (care.performed.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -61,7 +61,7 @@ class PatientCareWidget extends StatelessWidget {
                     spacing: 8.0,
                     runSpacing: 4.0,
                     children:
-                        care.carePerformed
+                        care.performed
                             .map(
                               (careItem) => Chip(
                                 label: Text(careItem),
