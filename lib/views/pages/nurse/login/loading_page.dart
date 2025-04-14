@@ -31,7 +31,10 @@ class _LoadingPageState extends State<LoadingPage> {
     try {
       // Fetch data from all providers
       await Future.wait([
-        Provider.of<CareProvider>(context, listen: false).fetchCares(),
+        Provider.of<CareProvider>(
+          context,
+          listen: false,
+        ).fetchByDate(DateTime.now()),
         Provider.of<PatientProvider>(context, listen: false).fetchPatients(),
         Provider.of<CareItemProvider>(context, listen: false).fetchCareItems(),
       ]);

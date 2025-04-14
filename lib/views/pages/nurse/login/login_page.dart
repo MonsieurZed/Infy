@@ -106,7 +106,7 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              HeroWidget(title: AppStrings.appTitle),
+              HeroWidget(),
               const SizedBox(height: 50),
               TextField(
                 controller: emailController,

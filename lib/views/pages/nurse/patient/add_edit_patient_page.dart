@@ -1,8 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:infy/data/class/patient_class.dart';
-import 'package:infy/data/utils/inputformater.dart';
 import 'package:infy/data/strings.dart';
+import 'package:infy/data/utils/inputformater.dart';
 import 'package:provider/provider.dart';
 import 'package:infy/data/providers/patient_provider.dart';
 
@@ -102,9 +103,8 @@ class _AddPatientPageState extends State<AddPatientPage> {
                       const SizedBox(width: 10),
                       ElevatedButton(
                         onPressed:
-                            () => patientProvider.addNurseToPatient(
+                            () => patientProvider.addCaregiver(
                               _patientIdController.text.trim(),
-                              context,
                             ),
                         child: const Text(AppStrings.importPatient),
                       ),
@@ -274,18 +274,29 @@ class _AddPatientPageState extends State<AddPatientPage> {
                         ),
                         const SizedBox(height: 30),
                         ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             if (_patientFormKey.currentState!.validate()) {
-                              patientProvider.savePatient(
-                                _firstnameController,
-                                _lastNameController,
-                                _rueController,
-                                _codePostalController,
-                                _villeController,
-                                _birthDate,
-                                widget.patient,
-                                context,
+                              Patient patient =
+                                  widget.patient ??
+                                  await Patient.create(
+                                    firstName: _firstnameController.text.trim(),
+                                    lastName: _lastNameController.text.trim(),
+                                    address:
+                                        "${_rueController.text.trim()}, ${_codePostalController.text.trim()}, ${_villeController.text.trim()}",
+                                    birthDate: _birthDate!,
+                                    caregivers: [
+                                      FirebaseAuth.instance.currentUser!.uid,
+                                    ],
+                                  );
+                              await patientProvider.submit(patient);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    AppStrings.patientSavedSuccessfully,
+                                  ),
+                                ),
                               );
+                              Navigator.pop(context);
                             } else {
                               setState(
                                 () {},

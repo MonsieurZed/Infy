@@ -4,8 +4,8 @@ import 'package:infy/data/constants.dart';
 import 'package:intl/intl.dart';
 import 'package:infy/data/strings.dart';
 
-class PatientCareWidget extends StatelessWidget {
-  const PatientCareWidget({
+class DetailedCareWidget extends StatefulWidget {
+  const DetailedCareWidget({
     super.key,
     required this.care,
     required this.caregiverName,
@@ -14,6 +14,11 @@ class PatientCareWidget extends StatelessWidget {
   final Care care;
   final String caregiverName;
 
+  @override
+  State<DetailedCareWidget> createState() => _DetailedCareWidgetState();
+}
+
+class _DetailedCareWidgetState extends State<DetailedCareWidget> {
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -28,23 +33,23 @@ class PatientCareWidget extends StatelessWidget {
               DateFormat(
                 AppConstants.fullTimeFormat,
                 AppConstants.locale,
-              ).format(care.timestamp.toDate()),
+              ).format(widget.care.timestamp.toDate()),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             // Line 2: Caregiver's name
-            Text(caregiverName, style: const TextStyle(fontSize: 16)),
+            Text(widget.caregiverName, style: const TextStyle(fontSize: 16)),
 
             const SizedBox(height: 8),
             // Line 3: Annotation
-            if (care.info != null && care.info!.isNotEmpty)
+            if (widget.care.info != null && widget.care.info!.isNotEmpty)
               Text(
-                care.info!,
+                widget.care.info!,
                 style: const TextStyle(fontSize: 14, color: Colors.grey),
               ),
             const SizedBox(height: 8),
             // Line 4: List of completed care
-            if (care.performed.isNotEmpty)
+            if (widget.care.performed.isNotEmpty)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -61,7 +66,7 @@ class PatientCareWidget extends StatelessWidget {
                     spacing: 8.0,
                     runSpacing: 4.0,
                     children:
-                        care.performed
+                        widget.care.performed
                             .map(
                               (careItem) => Chip(
                                 label: Text(careItem),

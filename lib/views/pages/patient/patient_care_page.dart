@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:infy/data/class/care_class.dart';
 import 'package:infy/data/constants.dart';
 import 'package:infy/data/strings.dart';
-import 'package:infy/views/widgets/patient_care_widget.dart';
+import 'package:infy/views/widgets/detailed_care_widget.dart';
 
 class PatientCarePage extends StatefulWidget {
   const PatientCarePage({super.key, required this.patientId});
@@ -106,7 +106,7 @@ class _PatientCarePageState extends State<PatientCarePage> {
                   final entry = _careList.entries.toList()[index];
                   final care = entry.key;
                   final caretakerName = entry.value;
-                  return PatientCareWidget(
+                  return DetailedCareWidget(
                     care: care,
                     caregiverName: caretakerName,
                   );

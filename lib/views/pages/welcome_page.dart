@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:infy/data/constants.dart';
 import 'package:infy/views/pages/nurse/login/login_page.dart';
 import 'package:infy/views/pages/patient/login_page.dart';
+import 'package:infy/views/widgets/hero_widget.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:infy/views/pages/nurse/widget_tree.dart';
@@ -37,22 +38,7 @@ class WelcomePage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Lottie.asset(
-                      LottiesString.home,
-                      height: MediaQuery.of(context).size.height * 0.5,
-                    ),
-                    SizedBox(height: 40),
-                    FittedBox(
-                      child: Text(
-                        AppStrings.welcomeMessage,
-                        style: TextStyle(
-                          fontSize: 50,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 50,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                    HeroWidget(),
                     SizedBox(height: 40),
                     FilledButton(
                       onPressed: () {

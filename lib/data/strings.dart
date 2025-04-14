@@ -99,7 +99,7 @@ class AppStrings {
   static const String addPatient = 'Add Patient';
   static const String editPatient = 'Edit Patient';
   static const String enterValidPatientId = 'Please  enter a valid patient ID.';
-  static const String noPatientFound = 'No patient found with this ID.';
+  static const String patientNotFound = 'No patient found with this ID.';
   static const String addedAsCaregiver = 'You have been added as a caregiver.';
   static const String alreadyCaregiver =
       'You are already a caregiver for this patient.';
@@ -145,4 +145,6 @@ class AppStrings {
       'The patient code must be 9 characters long.';
 
   static const String images = 'Images';
+  static const String imagesUploadedSuccessfully =
+      'Images uploaded successfully';
 }

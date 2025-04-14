@@ -12,19 +12,25 @@
 .swiftpm/
 migrate_working_dir/
 
-private.*
-firebase*
-
 # IntelliJ related
 *.iml
 *.ipr
 *.iws
 .idea/
 
+web/
+windows/
+linux/
+macos/
+android/
+node_modules/
+ios/
+private.*
+
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
 # is commented out by default.
-.vscode/
+#.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -34,16 +40,7 @@ firebase*
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-build/*
-linux/*
-android/*
-ios/*
-windows/*
-node_modules/*
-macos/*
-web/*
-scripts/*
-
+/build/
 
 # Symbolication related
 app.*.symbols
@@ -55,42 +52,3 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-
-# macOS related
-**/*.xcworkspace
-**/*.xcuserstate
-**/*.xcuserdata
-**/*.xcodeproj
-**/*.xcconfig
-.DS_Store
-
-# Windows related
-**/CMakeLists.txt.user
-**/flutter/
-**/runner/
-
-# Linux related
-**/CMakeLists.txt.user
-**/flutter/
-**/runner/
-
-# Web related
-/web/icons/
-/web/splash/
-/web/*.html
-/web/*.json
-
-# Firebase related
-**/google-services.json
-**/firebase_options.dart
-
-# Node.js related
-node_modules/
-package-lock.json
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*

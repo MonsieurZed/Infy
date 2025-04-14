@@ -5,6 +5,8 @@ import 'package:infy/data/class/care_class.dart';
 import 'package:infy/data/class/care_item_class.dart';
 import 'package:infy/data/constants.dart';
 import 'package:infy/data/providers/care_provider.dart';
+import 'package:infy/utils/app_logger.dart';
+import 'package:infy/views/pages/nurse/care/add_edit_care_widget/care_item_widget.dart';
 import 'package:intl/intl.dart';
 import 'package:infy/data/class/patient_class.dart';
 import 'package:provider/provider.dart';
@@ -51,9 +53,9 @@ class _AddEditCarePageState extends State<AddEditCarePage> {
 
   Future<void> _pickAndUploadImages() async {
     final ImagePicker picker = ImagePicker();
-    final List<XFile>? images = await picker.pickMultiImage();
+    final List<XFile> images = await picker.pickMultiImage(imageQuality: 25);
 
-    if (images != null && images.isNotEmpty) {
+    if (images.isNotEmpty) {
       setState(() {
         _isUploading = true; // Démarre l'animation de chargement
       });
@@ -61,47 +63,45 @@ class _AddEditCarePageState extends State<AddEditCarePage> {
       try {
         for (var image in images) {
           final File originalFile = File(image.path);
-
+          final String name =
+              "${image.name}_${DateTime.now().millisecondsSinceEpoch}";
           // Compresser l'image originale
-          final String compressedPath = '${originalFile.path}_compressed.jpg';
-          final File? compressedFile =
-              await FlutterImageCompress.compressAndGetFile(
-                originalFile.path,
-                compressedPath,
-                quality: 80,
-              );
+          final String compressedPath =
+              '${originalFile.path}_${DateTime.now().millisecondsSinceEpoch}compressed.jpg';
+          final compressedFile = await FlutterImageCompress.compressAndGetFile(
+            originalFile.path,
+            compressedPath,
+            quality: 50,
+          );
 
           if (compressedFile == null) {
-            throw Exception(
-              "Erreur lors de la compression de l'image originale.",
-            );
+            throw Exception("Error while compressing the original image.");
           }
 
           // Générer une miniature
           final String thumbnailPath = '${originalFile.path}_thumbnail.jpg';
-          final File? thumbnailFile =
-              await FlutterImageCompress.compressAndGetFile(
-                originalFile.path,
-                thumbnailPath,
-                quality: 20,
-                minWidth: 150,
-                minHeight: 150,
-              );
+          final thumbnailFile = await FlutterImageCompress.compressAndGetFile(
+            originalFile.path,
+            thumbnailPath,
+            quality: 5,
+            minWidth: 150,
+            minHeight: 150,
+          );
 
           if (thumbnailFile == null) {
-            throw Exception("Erreur lors de la génération de la miniature.");
+            throw Exception("Error while generating the thumbnail.");
           }
 
           // Références Firebase Storage
           final storageRef = FirebaseStorage.instance.ref();
-          final imagesRef = storageRef.child('images/${image.name}');
+          final imagesRef = storageRef.child('images/$name');
           final thumbnailsRef = storageRef.child('thumbnails/${image.name}');
 
           // Upload de l'image compressée
-          await imagesRef.putFile(compressedFile);
+          await imagesRef.putFile(File(compressedFile.path));
 
           // Upload de la miniature
-          await thumbnailsRef.putFile(thumbnailFile);
+          await thumbnailsRef.putFile(File(thumbnailFile.path));
 
           // Obtenir les URLs de téléchargement
           final String imageUrl = await imagesRef.getDownloadURL();
@@ -113,80 +113,16 @@ class _AddEditCarePageState extends State<AddEditCarePage> {
           });
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Images et miniatures uploadées avec succès'),
-          ),
-        );
+        AppLogger.snackbar(context, AppStrings.imagesUploadedSuccessfully);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors de l\'upload : $e')),
-        );
-        print(e);
+        var message = 'Erreur lors de l\'upload des images : $e';
+        AppLogger.snackbar(context, message);
+        AppLogger.e(message);
       } finally {
         setState(() {
           _isUploading = false; // Arrête l'animation de chargement
         });
       }
-    }
-  }
-
-  Future<void> _submitCare() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final String? caretakerId = FirebaseAuth.instance.currentUser?.uid;
-    if (caretakerId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text(AppStrings.userNotLoggedIn)));
-      return;
-    }
-
-    // Vérifiez que _uploadedImageUrls contient bien les URLs
-    debugPrint('Uploaded Image URLs: $_uploadedImageUrls');
-
-    final care = Care(
-      documentId:
-          widget.care?.documentId ??
-          widget.patient.documentId +
-              DateFormat('yyyyMMddHHmmss').format(_selectedTimestamp!),
-      caregiverId: caretakerId,
-      patientId: widget.patient.documentId,
-      timestamp: Timestamp.fromDate(_selectedTimestamp ?? DateTime.now()),
-      coordinates: {},
-      performed: _selectedCareItems,
-      info: _infoController.text.trim(),
-      images:
-          _uploadedImageUrls, // Assurez-vous que cette liste est bien passée
-    );
-
-    try {
-      final careProvider = Provider.of<CareProvider>(context, listen: false);
-
-      // Ajout ou mise à jour du soin
-      await careProvider.submitCare(care: care);
-
-      // Recharger les données après la mise à jour
-      await careProvider.fetchCareByDate(
-        _selectedTimestamp ?? DateTime.now(),
-        reload: true,
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.care != null
-                ? AppStrings.careUpdatedSuccessfully
-                : AppStrings.careAddedSuccessfully,
-          ),
-        ),
-      );
-
-      Navigator.pop(context);
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${AppStrings.error}: $e')));
     }
   }
 
@@ -217,6 +153,50 @@ class _AddEditCarePageState extends State<AddEditCarePage> {
           );
         });
       }
+    }
+  }
+
+  Future<void> _submitCare() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final String? caretakerId = FirebaseAuth.instance.currentUser?.uid;
+    if (caretakerId == null) {
+      AppLogger.snackbar(context, AppStrings.userNotLoggedIn);
+      return;
+    }
+
+    final care = Care(
+      documentId:
+          widget.care?.documentId ??
+          widget.patient.documentId +
+              DateFormat('yyyyMMddHHmmss').format(_selectedTimestamp!),
+      caregiverId: caretakerId,
+      patientId: widget.patient.documentId,
+      timestamp: Timestamp.fromDate(_selectedTimestamp ?? DateTime.now()),
+      coordinates: {},
+      performed: _selectedCareItems,
+      info: _infoController.text.trim(),
+      images:
+          _uploadedImageUrls, // Assurez-vous que cette liste est bien passée
+    );
+
+    try {
+      final careProvider = Provider.of<CareProvider>(context, listen: false);
+
+      // Ajout ou mise à jour du soin
+      await careProvider.submitCare(care: care);
+
+      AppLogger.snackbar(
+        context,
+        widget.care != null
+            ? AppStrings.careUpdatedSuccessfully
+            : AppStrings.careAddedSuccessfully,
+      );
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      AppLogger.snackbar(context, '${AppStrings.error}: $e');
+      AppLogger.e('${AppStrings.error}: $e');
     }
   }
 
@@ -265,8 +245,8 @@ class _AddEditCarePageState extends State<AddEditCarePage> {
                             children: [
                               Image.network(
                                 entry.key, // Thumbnail URL
-                                height: 100,
-                                width: 100,
+                                height: 60,
+                                width: 60,
                                 fit: BoxFit.cover,
                               ),
                               Positioned(
@@ -314,58 +294,19 @@ class _AddEditCarePageState extends State<AddEditCarePage> {
                             final careType = entry.key;
                             final items = entry.value;
 
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  careType,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Wrap(
-                                  spacing: 4.0,
-                                  runSpacing: 4.0,
-                                  children:
-                                      items.map((careItem) {
-                                        final isSelected = _selectedCareItems
-                                            .contains(careItem.documentId);
-                                        return SizedBox(
-                                          width: 100,
-                                          height: 40,
-                                          child: ElevatedButton(
-                                            onPressed: () {
-                                              setState(() {
-                                                if (isSelected) {
-                                                  _selectedCareItems.remove(
-                                                    careItem.documentId,
-                                                  );
-                                                } else {
-                                                  _selectedCareItems.add(
-                                                    careItem.documentId,
-                                                  );
-                                                }
-                                              });
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  isSelected
-                                                      ? Colors.teal[100]
-                                                      : Colors.white10,
-                                              padding: EdgeInsets.zero,
-                                            ),
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              child: Text(careItem.name),
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                ),
-                                const SizedBox(height: 16),
-                              ],
+                            return CareItemsWidget(
+                              careType: careType,
+                              items: items,
+                              selectedCareItems: _selectedCareItems,
+                              onItemSelected: (documentId) {
+                                setState(() {
+                                  if (_selectedCareItems.contains(documentId)) {
+                                    _selectedCareItems.remove(documentId);
+                                  } else {
+                                    _selectedCareItems.add(documentId);
+                                  }
+                                });
+                              },
                             );
                           }).toList(),
                     );
@@ -382,9 +323,17 @@ class _AddEditCarePageState extends State<AddEditCarePage> {
                 const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
-                    onPressed: _submitCare,
+                    onPressed: _isUploading ? null : _submitCare,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isUploading ? Colors.grey : Colors.teal,
+                    ),
                     child: Text(
                       widget.care != null ? AppStrings.update : AppStrings.add,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

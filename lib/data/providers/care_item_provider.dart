@@ -16,7 +16,6 @@ class CareItemProvider with ChangeNotifier {
   Future<void> fetchCareItems() async {
     if (_loaded) return;
     _isLoading = true;
-    notifyListeners();
 
     try {
       final QuerySnapshot snapshot =

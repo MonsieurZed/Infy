@@ -43,14 +43,13 @@ class _LoginPatientPageState extends State<LoginPatientPage> {
 
       // Check if the patient code exists in Firebase
       try {
-        final QuerySnapshot snapshot =
+        final DocumentSnapshot snapshot =
             await FirebaseFirestore.instance
                 .collection(FirebaseString.collectionPatients)
-                .where(FirebaseString.patientId, isEqualTo: code)
-                .limit(1)
+                .doc(code)
                 .get();
 
-        if (snapshot.docs.isNotEmpty) {
+        if (snapshot.exists) {
           // Navigate to the next page if the code exists
           Navigator.push(
             context,

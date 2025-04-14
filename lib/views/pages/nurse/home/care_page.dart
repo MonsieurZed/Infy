@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:infy/data/class/care_class.dart';
 import 'package:infy/data/constants.dart';
+import 'package:infy/data/providers/patient_provider.dart';
 import 'package:infy/data/strings.dart';
 import 'package:intl/intl.dart';
 import 'package:infy/data/class/patient_class.dart';
@@ -33,7 +34,7 @@ class _CarePageState extends State<CarePage> {
       Provider.of<CareProvider>(
         context,
         listen: false,
-      ).fetchCareByDate(actualdate).then((_) {
+      ).fetchByDate(actualdate).then((_) {
         _jumpToBottom(); // Scroll to the bottom after data is loaded
       });
     });
@@ -51,7 +52,7 @@ class _CarePageState extends State<CarePage> {
       Provider.of<CareProvider>(
         context,
         listen: false,
-      ).fetchCareByDate(actualdate).then((_) {
+      ).fetchByDate(actualdate).then((_) {
         _jumpToBottom(); // Scroll to the bottom after date change
       });
     });
@@ -68,9 +69,8 @@ class _CarePageState extends State<CarePage> {
   @override
   Widget build(BuildContext context) {
     final careProvider = Provider.of<CareProvider>(context);
-    final Map<Care, Patient> careSummaries =
-        careProvider.careSummariesByDate[actualdate] ?? {};
-
+    final patientProvider = Provider.of<PatientProvider>(context);
+    final Map<String, Care> careSummaries = careProvider.cares;
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -97,7 +97,7 @@ class _CarePageState extends State<CarePage> {
                       if (pickedDate != null) {
                         setState(() {
                           actualdate = pickedDate;
-                          careProvider.fetchCareByDate(actualdate);
+                          careProvider.fetchByDate(actualdate);
                         });
                       }
                     },
@@ -111,7 +111,10 @@ class _CarePageState extends State<CarePage> {
                 ),
                 const SizedBox(width: 5),
                 ElevatedButton(
-                  onPressed: () => changeDate(1),
+                  onPressed:
+                      actualdate.day == DateTime.now().day
+                          ? null
+                          : () => changeDate(1),
                   child: const Icon(Icons.arrow_forward),
                 ),
               ],
@@ -124,33 +127,71 @@ class _CarePageState extends State<CarePage> {
                       ? const Center(child: CircularProgressIndicator())
                       : careSummaries.isEmpty
                       ? const Center(child: Text(AppStrings.noCareFound))
-                      : ListView.builder(
-                        controller: _scrollController,
-                        physics: const ClampingScrollPhysics(),
-                        itemCount: careSummaries.length,
-                        itemBuilder: (context, index) {
-                          final care =
-                              careSummaries.entries.elementAt(index).key;
-                          final patient =
-                              careSummaries.entries.elementAt(index).value;
+                      : Builder(
+                        builder: (context) {
+                          final filteredCareSummaries =
+                              careSummaries.values
+                                  .where(
+                                    (care) =>
+                                        care.timestamp.toDate().year ==
+                                            actualdate.year &&
+                                        care.timestamp.toDate().month ==
+                                            actualdate.month &&
+                                        care.timestamp.toDate().day ==
+                                            actualdate.day,
+                                  )
+                                  .toList();
 
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => DetailCarePage(
-                                        care: care,
-                                        patient: patient,
-                                      ),
+                          if (filteredCareSummaries.isEmpty) {
+                            return const Center(
+                              child: Text(AppStrings.noCareFound),
+                            );
+                          }
+
+                          return ListView.builder(
+                            controller: _scrollController,
+                            physics: const ClampingScrollPhysics(),
+                            itemCount: filteredCareSummaries.length,
+                            itemBuilder: (context, index) {
+                              final care = filteredCareSummaries[index];
+                              return FutureBuilder<Patient?>(
+                                future: patientProvider.fetchPatientById(
+                                  care.patientId,
                                 ),
+                                builder: (context, patientSnapshot) {
+                                  if (patientSnapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const SizedBox.shrink();
+                                  } else if (patientSnapshot.hasError) {
+                                    return const Center(
+                                      child: Text(AppStrings.error),
+                                    );
+                                  } else {
+                                    final patient = patientSnapshot.data;
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (context) => DetailCarePage(
+                                                  care: care,
+                                                  patient:
+                                                      patient ??
+                                                      Patient.empty(),
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      child: CareSummaryWidget(
+                                        care: care,
+                                        patient: patient ?? Patient.empty(),
+                                      ),
+                                    );
+                                  }
+                                },
                               );
                             },
-                            child: CareSummaryWidget(
-                              care: care,
-                              patient: patient,
-                            ),
                           );
                         },
                       ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:infy/data/constants.dart';
-import 'package:infy/data/strings.dart';
 import 'package:infy/data/style.dart';
 import 'package:intl/intl.dart';
 import 'package:infy/data/class/care_class.dart';
@@ -36,7 +35,6 @@ class CareWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 8),
                 // Date et heure
                 Text(
                   DateFormat(
@@ -45,32 +43,22 @@ class CareWidget extends StatelessWidget {
                   ).format(care.timestamp.toDate()),
                   style: KTextStylesCustom.descBasic,
                 ),
-                const SizedBox(height: 8),
                 // Annotation
                 if (care.info != null && care.info!.isNotEmpty)
                   Text(care.info!, style: KTextStylesCustom.descBasic),
-                const SizedBox(height: 8),
                 // Soins réalisés
                 if (care.performed.isNotEmpty)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        AppStrings.careDetailsTitle,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
                       Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
+                        spacing: 2.0,
+                        runSpacing: 2.0,
                         children:
                             care.performed
                                 .map(
                                   (careItem) => Chip(
+                                    padding: const EdgeInsets.all(0.0),
                                     label: Text(careItem),
                                     backgroundColor: Colors.teal.shade100,
                                   ),
@@ -79,21 +67,11 @@ class CareWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-                const SizedBox(height: 8),
                 // Images
-                if (care.images != null && care.images!.isNotEmpty)
+                if (care.images.isNotEmpty)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        AppStrings.images,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
                       Wrap(
                         spacing: 8.0,
                         runSpacing: 8.0,
@@ -101,7 +79,6 @@ class CareWidget extends StatelessWidget {
                             care.images.entries.map((entry) {
                               return GestureDetector(
                                 onTap: () {
-                                  // Affiche l'URL de l'image dans une boîte de dialogue
                                   showDialog(
                                     context: context,
                                     builder:
@@ -129,8 +106,8 @@ class CareWidget extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8.0),
                                   child: Image.network(
                                     entry.key,
-                                    height: 100,
-                                    width: 100,
+                                    height: 60,
+                                    width: 60,
                                     fit: BoxFit.cover,
                                   ),
                                 ),

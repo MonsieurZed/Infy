@@ -6,13 +6,15 @@ import 'package:infy/data/strings.dart';
 import '../class/patient_class.dart';
 
 class PatientProvider with ChangeNotifier {
-  final List<Patient> _patients = [];
-  List<Patient> _filteredPatients = [];
-  bool _isLoading = false;
-  DocumentSnapshot? _lastDocument; // For pagination
-  final int _batchSize = 10; // Number of patients to load per batch
-  bool _hasMore = true; // Indicates if more patients are available
+  final Map<String, Patient> _patients = {};
 
+  bool _isLoading = false;
+  bool _hasMore = true;
+  final int _batchSize = 7;
+  List<Patient> _filteredPatients = [];
+  DocumentSnapshot? _lastDocument;
+
+  Map<String, Patient> get patients => _patients;
   List<Patient> get filteredPatients => _filteredPatients;
   bool get isLoading => _isLoading;
 
@@ -54,14 +56,14 @@ class PatientProvider with ChangeNotifier {
             FirebaseString.documentId: document.id,
             ...data,
           });
-          _patients.add(patient);
+          _patients[document.id] = patient;
         }
         _lastDocument = snapshot.docs.last;
       } else {
         _hasMore = false; // No more patients to load
       }
 
-      _filteredPatients = List.from(_patients);
+      _filteredPatients = _patients.values.toList();
     } catch (e) {
       debugPrint('${AppStrings.errorFetchingItem} ${AppStrings.patient}: $e');
     } finally {
@@ -80,10 +82,10 @@ class PatientProvider with ChangeNotifier {
   void filterPatients(String query) {
     query = query.toLowerCase();
     if (query.isEmpty) {
-      _filteredPatients = List.from(_patients);
+      _filteredPatients = _patients.values.toList();
     } else {
       _filteredPatients =
-          _patients.where((patient) {
+          _patients.values.where((patient) {
             final fullName =
                 '${patient.firstName} ${patient.lastName}'.toLowerCase();
             final adresse = (patient.address ?? '').toLowerCase();
@@ -93,14 +95,7 @@ class PatientProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addNurseToPatient(String patientId, BuildContext context) async {
-    if (patientId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.enterValidPatientId)),
-      );
-      return;
-    }
-
+  Future<String> addCaregiver(String patientId) async {
     try {
       final String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
@@ -108,24 +103,20 @@ class PatientProvider with ChangeNotifier {
       }
 
       // Retrieve the patient from Firebase
-      final DocumentSnapshot doc =
-          await FirebaseFirestore.instance
-              .collection(FirebaseString.collectionPatients)
-              .doc(patientId)
-              .get();
-
-      if (!doc.exists) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.noPatientFound)),
-        );
-        return;
+      Patient? patient = _patients[patientId];
+      if (patient == null) {
+        patient = await fetchPatientById(patientId);
+        if (patient == null) {
+          throw Exception(AppStrings.patientNotFound);
+        }
       }
-
       // Convert the document into a Patient object
-      final patientData = doc.data() as Map<String, dynamic>;
-      final patient = Patient.fromJson({
-        FirebaseString.documentId: doc.id,
-        ...patientData,
+      final patientUpdated = Patient.fromJson({
+        FirebaseString.patientCaregivers: [
+          ...patient.caregivers,
+          FirebaseAuth.instance.currentUser?.uid,
+        ],
+        ...patient.toJson(),
       });
 
       // Add the user's UUID to the list of nurses
@@ -137,86 +128,67 @@ class PatientProvider with ChangeNotifier {
             .doc(patientId)
             .update({FirebaseString.patientCaregivers: updatedCaregivers});
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.addedAsCaregiver)),
-        );
+        _patients[patientId] = patientUpdated;
+        notifyListeners();
+        return AppStrings.addedAsCaregiver;
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.alreadyCaregiver)),
-        );
+        return AppStrings.alreadyCaregiver;
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${AppStrings.error}: $e')));
+      throw '${AppStrings.error}: $e';
     }
   }
 
-  Future<void> savePatient(
-    TextEditingController firstnameController,
-    TextEditingController lastNameController,
-    TextEditingController rueController,
-    TextEditingController codePostalController,
-    TextEditingController villeController,
-    DateTime? birthDate,
-    Patient? patient,
-    BuildContext context,
-  ) async {
+  Future<void> submit(Patient patient) async {
     try {
-      final String? userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) {
-        throw Exception(AppStrings.userNotLoggedIn);
-      }
-
-      // Build the address in the French format
-      final adresse =
-          '${rueController.text.trim()}, ${codePostalController.text.trim()}, ${villeController.text.trim()}';
-
-      // Create a new Patient object
-      final newPatient =
-          patient == null
-              ? await Patient.createWithVerifiedId(
-                firstName: firstnameController.text.trim(),
-                lastName: lastNameController.text.trim(),
-                birthDate: birthDate!,
-                address: adresse,
-                otherInfo: null,
-                infirmiers: [userId], // Add the user's UUID
-              )
-              : patient.copyWith(
-                firstName: firstnameController.text.trim(),
-                lastName: lastNameController.text.trim(),
-                dob: birthDate!,
-                address: adresse,
-              );
-
-      // Save to Firestore
-      if (patient == null) {
-        // Add a new patient
-        await FirebaseFirestore.instance
-            .collection(FirebaseString.collectionPatients)
-            .doc(newPatient.documentId)
-            .set(newPatient.toJson());
-      } else {
-        // Update an existing patient
-        await FirebaseFirestore.instance
-            .collection(FirebaseString.collectionPatients)
-            .doc(newPatient.documentId)
-            .update(newPatient.toJson());
-      }
-
-      // Repull patient data
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.patientSavedSuccessfully)),
-      );
-      Navigator.pop(
-        context,
-      ); // Return to the previous page with the updated patient
+      // Enregistrer le patient dans Firestore
+      await FirebaseFirestore.instance
+          .collection(FirebaseString.collectionPatients)
+          .doc(patient.documentId)
+          .set(patient.toJson());
+      _patients[patient.documentId] = patient;
+      notifyListeners();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${AppStrings.error}: $e')));
+      debugPrint('${AppStrings.errorSubmittingItem} ${AppStrings.patient}: $e');
+      throw Exception(
+        '${AppStrings.errorSubmittingItem} ${AppStrings.patient}',
+      );
+    }
+  }
+
+  /// Récupérer un patient en fonction de son patientID
+  Future<Patient?> fetchPatientById(String patientId) async {
+    try {
+      // Vérifier si le patient est déjà dans la liste
+      if (_patients.containsKey(patientId)) {
+        return _patients[patientId]; // Retourner le patient déjà chargé
+      }
+
+      // Si le patient n'est pas dans la liste, le récupérer depuis Firestore
+      final DocumentSnapshot doc =
+          await FirebaseFirestore.instance
+              .collection(FirebaseString.collectionPatients)
+              .doc(patientId)
+              .get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        final patient = Patient.fromJson({
+          FirebaseString.documentId: doc.id,
+          ...data,
+        });
+
+        // Ajouter le patient à la liste locale
+        _patients[patient.documentId] = patient;
+        notifyListeners();
+
+        return patient;
+      } else {
+        return null; // Patient non trouvé
+      }
+    } catch (e) {
+      debugPrint('${AppStrings.errorFetchingItem} ${AppStrings.patient}: $e');
+      throw Exception('${AppStrings.errorFetchingItem} ${AppStrings.patient}');
     }
   }
 }

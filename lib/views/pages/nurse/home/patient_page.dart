@@ -20,9 +20,6 @@ class _PatientPageState extends State<PatientPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PatientProvider>(context, listen: false).fetchPatients();
-    });
 
     _searchController.addListener(() {
       Provider.of<PatientProvider>(
@@ -60,45 +57,54 @@ class _PatientPageState extends State<PatientPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Row(
-              children: [
-                // Search field
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      labelText: AppStrings.searchbarPatient,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Row(
+                children: [
+                  // Search field
+                  Expanded(
+                    flex: 4,
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: AppStrings.searchbarPatient,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        prefixIcon: const Icon(Icons.search),
                       ),
-                      prefixIcon: const Icon(Icons.search),
                     ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                // Add patient button
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddPatientPage(),
+                  // Add patient button
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddPatientPage(),
+                          ),
+                        ).then((_) {
+                          // Refresh the list after returning
+                          patientProvider.fetchPatients(reload: true);
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            8,
+                          ), // Slightly rounded corners
+                        ),
+                        padding: const EdgeInsets.all(
+                          4,
+                        ), // Ensures a square shape
                       ),
-                    ).then((_) {
-                      // Refresh the list after returning
-                      patientProvider.fetchPatients(reload: true);
-                    });
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      child: Icon(Icons.add, size: 48, color: Colors.teal[200]),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             Expanded(

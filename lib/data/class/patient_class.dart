@@ -57,23 +57,23 @@ class Patient {
   }
 
   // Factory pour créer un Patient avec un ID vérifié et générer les mots-clés
-  static Future<Patient> createWithVerifiedId({
+  static Future<Patient> create({
     required String firstName,
     required String lastName,
     required DateTime birthDate,
-    String? address,
+    required String? address,
     Map<String, dynamic>? otherInfo,
-    required List<String> infirmiers,
+    required List<String> caregivers,
   }) async {
-    final id = await PatientUtils.generateVerifiedUniqueId();
+    final documentId = await PatientUtils.generateVerifiedUniqueId();
     return Patient(
       firstName: firstName,
       lastName: lastName,
       dob: birthDate,
-      documentId: id,
+      documentId: documentId,
       address: address,
       additionalInfo: otherInfo,
-      caregivers: infirmiers,
+      caregivers: caregivers,
     );
   }
 
@@ -93,6 +93,18 @@ class Patient {
       address: address ?? this.address,
       additionalInfo: additionalInfo ?? this.additionalInfo,
       caregivers: caregivers ?? this.caregivers,
+    );
+  }
+
+  static Patient empty() {
+    return Patient(
+      firstName: '',
+      lastName: '',
+      dob: DateTime.now(),
+      documentId: '',
+      address: '',
+      additionalInfo: null,
+      caregivers: [],
     );
   }
 }
