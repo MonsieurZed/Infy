@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:infy/data/class/care_class.dart';
 import 'package:infy/data/class/patient_class.dart';
 import 'package:infy/data/constants.dart';
+import 'package:infy/data/strings.dart';
 import 'package:infy/views/widgets/care_widget.dart';
 import 'package:infy/views/pages/nurse/patient/add_edit_patient_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:infy/data/strings.dart';
+import 'package:provider/provider.dart';
+import 'package:infy/data/providers/patient_provider.dart';
+import 'package:infy/data/providers/care_provider.dart';
 
 class ShowPatientPage extends StatefulWidget {
-  final Patient patient;
+  final String patientId;
 
-  const ShowPatientPage({super.key, required this.patient});
+  const ShowPatientPage({super.key, required this.patientId});
 
   @override
   State<ShowPatientPage> createState() => _ShowPatientPageState();
@@ -21,11 +24,52 @@ class ShowPatientPage extends StatefulWidget {
 class _ShowPatientPageState extends State<ShowPatientPage> {
   List<Care> _cares = [];
   bool _isLoading = true;
+  Patient? _patient;
 
   @override
   void initState() {
     super.initState();
     _fetchCares();
+    _loadPatient();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Recharger les soins à chaque fois que les dépendances changent (par exemple à la navigation)
+    _fetchCares();
+  }
+
+  // Cette méthode est appelée lorsqu'on revient à cette page après navigation
+  @override
+  void didUpdateWidget(ShowPatientPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Si on revient sur la même page mais avec un ID différent, recharger les données
+    if (oldWidget.patientId != widget.patientId) {
+      _fetchCares();
+      _loadPatient();
+    }
+  }
+
+  Future<void> _loadPatient() async {
+    final patientProvider = Provider.of<PatientProvider>(
+      context,
+      listen: false,
+    );
+    try {
+      final patient = await patientProvider.fetchPatientById(widget.patientId);
+      setState(() {
+        _patient = patient;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${AppStrings.errorRetrievingitem} ${AppStrings.patient} : $e',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _fetchCares() async {
@@ -35,23 +79,9 @@ class _ShowPatientPageState extends State<ShowPatientPage> {
         throw Exception(AppStrings.userNotLoggedIn);
       }
 
-      // Query to retrieve care associated with the patient and nurse
-      final QuerySnapshot snapshot =
-          await FirebaseFirestore.instance
-              .collection(FirebaseString.collectionCares)
-              .where(
-                FirebaseString.patientId,
-                isEqualTo: widget.patient.documentId,
-              )
-              .where(FirebaseString.caregiverId, isEqualTo: userId)
-              .orderBy(FirebaseString.timestamp, descending: true)
-              .get();
-
-      final List<Care> cares =
-          snapshot.docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            return Care.fromJson({FirebaseString.documentId: doc.id, ...data});
-          }).toList();
+      // Utiliser le CareProvider pour récupérer les soins du patient
+      final careProvider = Provider.of<CareProvider>(context, listen: false);
+      final cares = await careProvider.fetchByPatient(widget.patientId);
 
       setState(() {
         _cares = cares;
@@ -97,24 +127,31 @@ class _ShowPatientPageState extends State<ShowPatientPage> {
     );
 
     if (confirmed == true) {
-      await _removeNurseAndExit(context);
+      await _removeCaregiverAndExit(context);
     }
   }
 
-  Future<void> _removeNurseAndExit(BuildContext context) async {
+  Future<void> _removeCaregiverAndExit(BuildContext context) async {
     try {
       final String? userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
         throw Exception(AppStrings.userNotLoggedIn);
       }
 
-      if (widget.patient.caregivers.contains(userId)) {
-        final updatedNurses = List<String>.from(widget.patient.caregivers)
+      if (_patient == null) {
+        await _loadPatient();
+        if (_patient == null) {
+          throw Exception(AppStrings.patientNotFound);
+        }
+      }
+
+      if (_patient!.caregivers.contains(userId)) {
+        final updatedNurses = List<String>.from(_patient!.caregivers)
           ..remove(userId);
 
         await FirebaseFirestore.instance
             .collection(FirebaseString.collectionPatients)
-            .doc(widget.patient.documentId)
+            .doc(widget.patientId)
             .update({FirebaseString.patientCaregivers: updatedNurses});
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -147,9 +184,15 @@ class _ShowPatientPageState extends State<ShowPatientPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => AddPatientPage(patient: widget.patient),
+                  builder:
+                      (context) => AddPatientPage(patientId: widget.patientId),
                 ),
-              );
+              ).then((_) {
+                // Forcer le rechargement des données lorsqu'on revient de l'édition du patient
+                setState(() {
+                  _loadPatient();
+                });
+              });
             },
           ),
           IconButton(
@@ -166,32 +209,51 @@ class _ShowPatientPageState extends State<ShowPatientPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Display patient information
-            SelectableText(
-              '${widget.patient.firstName} ${widget.patient.lastName}',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            // Display patient information from Provider
+            Consumer<PatientProvider>(
+              builder: (context, patientProvider, child) {
+                if (_patient == null) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SelectableText(
+                      '${_patient!.firstName} ${_patient!.lastName}',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SelectableText(
+                      '${AppStrings.dateOfBirth}: ${DateFormat(AppConstants.dateFormat).format(_patient!.dob)}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    SelectableText(
+                      '${AppStrings.address}: ${_patient!.address ?? AppStrings.notProvided}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    SelectableText(
+                      '${AppStrings.patientId}: ${_patient!.documentId}',
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      AppStrings.careListTitle,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: 8),
-            SelectableText(
-              '${AppStrings.dateOfBirth}: ${DateFormat(AppConstants.dateFormat).format(widget.patient.dob)}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            SelectableText(
-              '${AppStrings.address}: ${widget.patient.address ?? AppStrings.notProvided}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            SelectableText(
-              '${AppStrings.patientId}: ${widget.patient.documentId}',
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              AppStrings.careListTitle,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
             Expanded(
               child:
                   _isLoading
@@ -204,7 +266,7 @@ class _ShowPatientPageState extends State<ShowPatientPage> {
                           final care = _cares[index];
                           return CareWidget(
                             care: care,
-                            patient: widget.patient,
+                            patientId: widget.patientId,
                           );
                         },
                       ),

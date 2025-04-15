@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:infy/data/constants.dart';
 import 'package:infy/data/notifiers.dart';
+import 'package:infy/data/strings.dart';
 import 'package:infy/views/pages/welcome_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:infy/data/strings.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

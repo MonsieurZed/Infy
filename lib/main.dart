@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:infy/data/constants.dart';
 import 'package:infy/data/notifiers.dart';
 import 'package:infy/firebase_options.dart';
-import 'package:infy/views/pages/welcome_page.dart';
+import 'package:infy/views/pages/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'data/providers/care_provider.dart';
@@ -12,11 +12,15 @@ import 'data/providers/patient_provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:infy/data/providers/care_item_provider.dart';
 import 'data/strings.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 // Ensure Workmanager is initialized correctly
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // This is important for splash screen handling
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   await initializeDateFormatting(AppConstants.locale, null);
   // Check if Firebase is already initialized
   if (Firebase.apps.isEmpty) {
@@ -27,6 +31,9 @@ void main() async {
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp, // Lock to portrait mode
   ]).then((_) {
+    // Remove the splash screen once initialization is complete
+    FlutterNativeSplash.remove();
+
     runApp(
       MultiProvider(
         providers: [
@@ -81,23 +88,9 @@ class _MyAppState extends State<MyApp> {
                   isDarkModeNotifier.value ? Brightness.dark : Brightness.light,
             ),
           ),
-          home: MyHomePage(),
+          home: const SplashScreen(), // Use our custom splash screen here
         );
       },
     );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return WelcomePage();
   }
 }

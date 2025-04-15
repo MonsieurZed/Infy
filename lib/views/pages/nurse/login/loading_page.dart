@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:infy/data/constants.dart';
+import 'package:infy/data/strings.dart';
 import 'package:infy/views/pages/nurse/widget_tree.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:infy/data/providers/care_provider.dart';
 import 'package:infy/data/providers/patient_provider.dart';
 import 'package:infy/data/providers/care_item_provider.dart';
-import 'package:infy/data/strings.dart';
 
 class LoadingPage extends StatefulWidget {
   const LoadingPage({super.key});

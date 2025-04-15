@@ -120,7 +120,9 @@ class _PatientPageState extends State<PatientPage> {
                           context,
                           MaterialPageRoute(
                             builder:
-                                (context) => ShowPatientPage(patient: patient),
+                                (context) => ShowPatientPage(
+                                  patientId: patient.documentId,
+                                ),
                           ),
                         ).then((_) {
                           // Refresh the list after returning

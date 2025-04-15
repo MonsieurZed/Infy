@@ -9,8 +9,15 @@ import 'package:infy/data/providers/patient_provider.dart';
 
 class AddPatientPage extends StatefulWidget {
   final Patient? patient; // Existing patient for editing (null for adding)
+  final String?
+  patientId; // Alternative: patient ID for editing (null for adding)
 
-  const AddPatientPage({super.key, this.patient});
+  const AddPatientPage({super.key, this.patient, this.patientId})
+    : assert(
+        (patient == null && patientId == null) ||
+            (patient != null) ^ (patientId != null),
+        'Provide either patient or patientId, not both',
+      );
 
   @override
   State<AddPatientPage> createState() => _AddPatientPageState();
@@ -32,22 +39,57 @@ class _AddPatientPageState extends State<AddPatientPage> {
   @override
   void initState() {
     super.initState();
+
+    // Si nous avons un objet patient, utilisez-le directement
     if (widget.patient != null) {
-      // Pre-fill fields for editing
-      _firstnameController.text = widget.patient!.firstName;
-      _lastNameController.text = widget.patient!.lastName;
+      _populateFieldsFromPatient(widget.patient!);
+    }
+    // Si nous avons un ID de patient, chargez-le depuis Firebase
+    else if (widget.patientId != null) {
+      _loadPatientData();
+    }
+  }
 
-      // If the address exists, split it into its components
-      if (widget.patient!.address != null) {
-        final adresseParts = widget.patient!.address!.split(', ');
-        if (adresseParts.length == 3) {
-          _rueController.text = adresseParts[0];
-          _codePostalController.text = adresseParts[1];
-          _villeController.text = adresseParts[2];
-        }
+  void _populateFieldsFromPatient(Patient patient) {
+    _firstnameController.text = patient.firstName;
+    _lastNameController.text = patient.lastName;
+
+    // Si l'adresse existe, divisez-la en ses composants
+    if (patient.address != null) {
+      final adresseParts = patient.address!.split(', ');
+      if (adresseParts.length == 3) {
+        _rueController.text = adresseParts[0];
+        _codePostalController.text = adresseParts[1];
+        _villeController.text = adresseParts[2];
       }
+    }
 
-      _birthDate = widget.patient!.dob;
+    _birthDate = patient.dob;
+  }
+
+  Future<void> _loadPatientData() async {
+    try {
+      final patientProvider = Provider.of<PatientProvider>(
+        context,
+        listen: false,
+      );
+      final patient = await patientProvider.fetchPatientById(widget.patientId!);
+
+      if (patient != null && mounted) {
+        setState(() {
+          _populateFieldsFromPatient(patient);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${AppStrings.errorRetrievingitem} ${AppStrings.patient}: $e',
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -276,19 +318,51 @@ class _AddPatientPageState extends State<AddPatientPage> {
                         ElevatedButton(
                           onPressed: () async {
                             if (_patientFormKey.currentState!.validate()) {
-                              Patient patient =
-                                  widget.patient ??
-                                  await Patient.create(
-                                    firstName: _firstnameController.text.trim(),
-                                    lastName: _lastNameController.text.trim(),
-                                    address:
-                                        "${_rueController.text.trim()}, ${_codePostalController.text.trim()}, ${_villeController.text.trim()}",
-                                    birthDate: _birthDate!,
-                                    caregivers: [
-                                      FirebaseAuth.instance.currentUser!.uid,
-                                    ],
-                                  );
-                              await patientProvider.submit(patient);
+                              // Cas d'édition d'un patient existant
+                              if (widget.patient != null ||
+                                  widget.patientId != null) {
+                                // Si nous avons un ID mais pas d'objet patient, récupérez-le
+                                Patient patientToUpdate =
+                                    widget.patient ??
+                                    (await Provider.of<PatientProvider>(
+                                      context,
+                                      listen: false,
+                                    ).fetchPatientById(widget.patientId!))!;
+
+                                // Mise à jour des champs du patient
+                                patientToUpdate = Patient(
+                                  documentId: patientToUpdate.documentId,
+                                  firstName: _firstnameController.text.trim(),
+                                  lastName: _lastNameController.text.trim(),
+                                  address:
+                                      "${_rueController.text.trim()}, ${_codePostalController.text.trim()}, ${_villeController.text.trim()}",
+                                  dob: _birthDate!,
+                                  caregivers: patientToUpdate.caregivers,
+                                );
+
+                                await Provider.of<PatientProvider>(
+                                  context,
+                                  listen: false,
+                                ).submit(patientToUpdate);
+                              }
+                              // Cas de création d'un nouveau patient
+                              else {
+                                Patient newPatient = await Patient.create(
+                                  firstName: _firstnameController.text.trim(),
+                                  lastName: _lastNameController.text.trim(),
+                                  address:
+                                      "${_rueController.text.trim()}, ${_codePostalController.text.trim()}, ${_villeController.text.trim()}",
+                                  birthDate: _birthDate!,
+                                  caregivers: [
+                                    FirebaseAuth.instance.currentUser!.uid,
+                                  ],
+                                );
+                                await Provider.of<PatientProvider>(
+                                  context,
+                                  listen: false,
+                                ).submit(newPatient);
+                              }
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
@@ -296,7 +370,10 @@ class _AddPatientPageState extends State<AddPatientPage> {
                                   ),
                                 ),
                               );
-                              Navigator.pop(context);
+                              Navigator.pop(
+                                context,
+                                true,
+                              ); // Retourner true pour indiquer succès
                             } else {
                               setState(
                                 () {},
@@ -304,7 +381,7 @@ class _AddPatientPageState extends State<AddPatientPage> {
                             }
                           },
                           child: Text(
-                            widget.patient == null
+                            (widget.patient == null && widget.patientId == null)
                                 ? AppStrings.saveNewPatient
                                 : AppStrings.saveChanges,
                           ),

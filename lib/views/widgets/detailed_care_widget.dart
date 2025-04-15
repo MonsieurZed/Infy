@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:infy/data/class/care_class.dart';
 import 'package:infy/data/constants.dart';
-import 'package:intl/intl.dart';
 import 'package:infy/data/strings.dart';
+import 'package:intl/intl.dart';
 
 class DetailedCareWidget extends StatefulWidget {
   const DetailedCareWidget({

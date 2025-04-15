@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:infy/data/constants.dart';
+import 'package:infy/data/strings.dart';
 import 'package:infy/views/pages/nurse/login/login_page.dart';
 import 'package:infy/views/pages/patient/login_page.dart';
 import 'package:infy/views/widgets/hero_widget.dart';
-import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:infy/views/pages/nurse/widget_tree.dart';
-import 'package:infy/data/strings.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});

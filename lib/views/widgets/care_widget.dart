@@ -7,10 +7,19 @@ import 'package:infy/views/pages/nurse/care/detail_care_page.dart';
 import 'package:infy/data/class/patient_class.dart';
 
 class CareWidget extends StatelessWidget {
-  const CareWidget({super.key, required this.care, required this.patient});
+  const CareWidget({
+    super.key,
+    required this.care,
+    this.patient,
+    this.patientId,
+  }) : assert(
+         patient != null || patientId != null,
+         'Either patient or patientId must be provided',
+       );
 
   final Care care;
-  final Patient patient;
+  final Patient? patient;
+  final String? patientId;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +28,20 @@ class CareWidget extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => DetailCarePage(care: care, patient: patient),
+            builder:
+                (context) => DetailCarePage(
+                  careId: care.documentId,
+                  patient:
+                      patient ??
+                      Patient(
+                        documentId: patientId!,
+                        firstName: '',
+                        lastName: '',
+                        address: null,
+                        dob: DateTime.now(),
+                        caregivers: const [],
+                      ),
+                ),
           ),
         );
       },

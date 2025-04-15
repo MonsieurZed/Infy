@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:infy/data/constants.dart';
 import 'package:infy/data/strings.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import for SharedPreferences
-import 'package:infy/data/private.key.dart';
+import 'package:infy/utils/private.key.dart';
 import 'package:infy/views/pages/nurse/login/loading_page.dart';
 import 'package:infy/views/pages/nurse/widget_tree.dart';
 import 'package:infy/views/widgets/hero_widget.dart';

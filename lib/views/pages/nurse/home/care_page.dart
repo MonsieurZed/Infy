@@ -175,7 +175,7 @@ class _CarePageState extends State<CarePage> {
                                           MaterialPageRoute(
                                             builder:
                                                 (context) => DetailCarePage(
-                                                  care: care,
+                                                  careId: care.documentId,
                                                   patient:
                                                       patient ??
                                                       Patient.empty(),
