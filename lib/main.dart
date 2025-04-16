@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:infy/data/contants/constants.dart';
 import 'package:infy/data/providers/user_provider.dart';
-import 'package:infy/private.folder/private.key.dart';
+import 'package:infy/private.folder/firebase_options.dart';
 import 'package:infy/views/pages/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'data/providers/care_provider.dart';
