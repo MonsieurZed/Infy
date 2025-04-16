@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:infy/data/constants.dart';
-import 'package:infy/data/strings.dart';
-import 'package:infy/views/pages/nurse/login/login_page.dart';
+import 'package:infy/data/contants/constants.dart';
+import 'package:infy/data/contants/strings.dart';
+import 'package:infy/views/pages/caregivers/login/caregiver_login_page.dart';
 import 'package:infy/views/pages/patient/login_page.dart';
-import 'package:infy/views/widgets/hero_widget.dart';
+import 'package:infy/views/widgets/logo_hero_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:infy/views/pages/nurse/widget_tree.dart';
+import 'package:infy/views/pages/caregivers/widget_tree.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -24,7 +24,9 @@ class WelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    _checkLogin(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkLogin(context);
+    });
 
     return Scaffold(
       body: Center(
@@ -37,39 +39,36 @@ class WelcomePage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    HeroWidget(),
-                    SizedBox(height: 40),
+                    LogoHeroWidget(),
+                    const SizedBox(height: 40),
                     FilledButton(
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) {
-                              return LoginPage();
-                            },
+                            builder: (context) => const LoginPage(),
                           ),
                         );
                       },
                       style: FilledButton.styleFrom(
-                        minimumSize: Size(double.infinity, 40),
+                        minimumSize: const Size(double.infinity, 40),
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                       ),
-                      child: Text(AppStrings.caregiverButton),
+                      child: const Text(AppStrings.caregiverButton),
                     ),
                     OutlinedButton(
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) {
-                              return LoginPatientPage();
-                            },
+                            builder: (context) => const LoginPatientPage(),
                           ),
                         );
                       },
                       style: FilledButton.styleFrom(
-                        minimumSize: Size(double.infinity, 40),
+                        minimumSize: const Size(double.infinity, 40),
                       ),
-                      child: Text(AppStrings.patientButton),
+                      child: const Text(AppStrings.patientButton),
                     ),
                   ],
                 ),

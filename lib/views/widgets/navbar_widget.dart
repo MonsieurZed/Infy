@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:infy/data/strings.dart';
+import 'package:infy/data/contants/strings.dart';
 
 class NavbarWidget extends StatelessWidget {
   final int currentIndex;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:infy/data/class/care_item_class.dart';
-import 'package:infy/data/constants.dart';
-import 'package:infy/data/strings.dart';
+import 'package:infy/data/contants/constants.dart';
+import 'package:infy/data/contants/strings.dart';
 
 class CareItemProvider with ChangeNotifier {
   final List<CareItem> _careItems = []; // Liste locale des soins
@@ -13,9 +13,15 @@ class CareItemProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
 
   /// Récupérer tous les soins depuis Firebase
-  Future<void> fetchCareItems() async {
-    if (_loaded) return;
+  Future<void> fetchCareItems({bool reload = false}) async {
+    if (_loaded && !reload) return;
     _isLoading = true;
+
+    if (reload) {
+      _careItems.clear(); // Vider la liste existante si on recharge
+    }
+
+    notifyListeners(); // Notifier du chargement
 
     try {
       final QuerySnapshot snapshot =

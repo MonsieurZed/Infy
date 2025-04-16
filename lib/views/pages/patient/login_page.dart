@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // Import for kDebugMode
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import for Firebase
-import 'package:infy/data/constants.dart';
-import 'package:infy/data/strings.dart';
-import 'package:infy/utils/private.key.dart';
+import 'package:infy/data/contants/constants.dart';
+import 'package:infy/data/contants/strings.dart';
+import 'package:infy/private.folder/private.key.dart';
 import 'package:infy/views/pages/patient/patient_care_page.dart'; // Import for the next page
 
 class LoginPatientPage extends StatefulWidget {

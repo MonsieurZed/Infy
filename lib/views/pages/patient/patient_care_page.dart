@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:infy/data/class/care_class.dart';
-import 'package:infy/data/constants.dart';
-import 'package:infy/data/strings.dart';
-import 'package:infy/views/widgets/detailed_care_widget.dart';
+import 'package:infy/data/contants/constants.dart';
+import 'package:infy/data/contants/strings.dart';
+import 'package:infy/views/pages/patient/widget/detailed_care_widget.dart';
 
 class PatientCarePage extends StatefulWidget {
   const PatientCarePage({super.key, required this.patientId});

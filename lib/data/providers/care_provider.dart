@@ -3,9 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:infy/data/class/care_class.dart';
 import 'package:infy/data/class/patient_class.dart';
-import 'package:infy/data/constants.dart';
-import 'package:infy/data/strings.dart';
-import 'package:infy/utils/app_logger.dart';
+import 'package:infy/data/contants/constants.dart';
+import 'package:infy/data/contants/strings.dart';
+import 'package:infy/data/utils/app_logger.dart';
 import 'package:intl/intl.dart';
 
 class CareProvider with ChangeNotifier {

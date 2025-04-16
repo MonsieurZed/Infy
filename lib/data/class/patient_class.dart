@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:infy/data/constants.dart';
+import 'package:infy/data/contants/constants.dart';
 
-import 'package:infy/data/utils/patient_utils.dart'; // Import pour générer un ID aléatoire
+import 'package:infy/data/class/class_utils/patient_utils.dart'; // Import pour générer un ID aléatoire
 
 class Patient {
   final String firstName; // First name of the patient

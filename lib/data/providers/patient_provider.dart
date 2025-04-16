@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:infy/data/constants.dart';
-import 'package:infy/data/strings.dart';
+import 'package:infy/data/contants/constants.dart';
+import 'package:infy/data/contants/strings.dart';
 import '../class/patient_class.dart';
 
 class PatientProvider with ChangeNotifier {

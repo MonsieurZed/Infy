@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:infy/data/constants.dart';
+import 'package:infy/data/contants/constants.dart';
 
 class Care {
   final String documentId;
