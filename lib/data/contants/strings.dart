@@ -50,6 +50,7 @@ class AppStrings {
   static const String confirmPasswordRequired = 'Confirm Password is required';
   static const String alreadyHaveAccount = 'Already have an account? Login';
   static const String dontHaveAccount = 'Don\'t have an account?';
+  static const String enterAllFields = 'Email and password are required.';
 
   // Password Reset
   static const String resetPasswordTitle = 'Reset Password';

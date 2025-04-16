@@ -1,11 +1,10 @@
-import 'package:flutter/foundation.dart'; // Import for kDebugMode
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:provider/provider.dart';
 import 'package:infy/data/contants/constants.dart';
 import 'package:infy/data/contants/strings.dart';
 import 'package:infy/data/providers/user_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import for SharedPreferences
-import 'package:infy/private.folder/private.key.dart';
 import 'package:infy/views/pages/caregivers/login/caregiver_loading_page.dart';
 import 'package:infy/views/pages/caregivers/login/caregiver_signup_page.dart'; // Import for the signup page
 import 'package:infy/views/pages/caregivers/widget_tree.dart';
@@ -24,14 +23,12 @@ class _LoginPageState extends State<LoginPage> {
   TextEditingController passwordController = TextEditingController();
   bool isLoading = false;
   bool rememberMe = false; // State for "Remember Me"
+  bool obscurePassword = true; // For password visibility toggle
 
   @override
   void initState() {
     super.initState();
     _loadSavedCredentials();
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   _autoLoginInDebugMode();
-    // });
   }
 
   Future<void> _loadSavedCredentials() async {
@@ -40,10 +37,10 @@ class _LoginPageState extends State<LoginPage> {
     final savedPassword = prefs.getString(PrefsString.savedPassword);
     final savedRememberMe = prefs.getBool(PrefsString.rememberMe) ?? false;
 
-    if (savedRememberMe) {
+    if (savedRememberMe && savedEmail != null && savedPassword != null) {
       setState(() {
-        emailController.text = savedEmail ?? '';
-        passwordController.text = savedPassword ?? '';
+        emailController.text = savedEmail;
+        passwordController.text = savedPassword;
         rememberMe = savedRememberMe;
       });
     }
@@ -59,38 +56,6 @@ class _LoginPageState extends State<LoginPage> {
       await prefs.remove(PrefsString.savedEmail);
       await prefs.remove(PrefsString.savedPassword);
       await prefs.setBool(PrefsString.rememberMe, false);
-    }
-  }
-
-  Future<void> _autoLoginInDebugMode() async {
-    if (kDebugMode) {
-      // Automatically log in with the debug account
-      setState(() {
-        isLoading = true;
-      });
-
-      try {
-        // Utiliser le UserProvider au lieu de FirebaseAuth directement
-        await Provider.of<UserProvider>(
-          context,
-          listen: false,
-        ).signIn(PrivateString.login, PrivateString.password);
-
-        // Navigate to the main page after successful login
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const LoadingPage()),
-            (route) => false,
-          );
-        }
-      } catch (e) {
-        debugPrint(': $e');
-      } finally {
-        setState(() {
-          isLoading = false;
-        });
-      }
     }
   }
 
@@ -126,7 +91,6 @@ class _LoginPageState extends State<LoginPage> {
                   }
                   return Column(
                     children: [
-                      // ...Le reste du contenu...
                       TextField(
                         controller: emailController,
                         decoration: InputDecoration(
@@ -135,6 +99,8 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
                       ),
                       const SizedBox(height: 10),
                       TextField(
@@ -145,13 +111,21 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           suffixIcon: IconButton(
-                            icon: const Icon(Icons.visibility_off),
+                            icon: Icon(
+                              obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
                             onPressed: () {
-                              // Handle password visibility toggle
+                              setState(() {
+                                obscurePassword = !obscurePassword;
+                              });
                             },
                           ),
                         ),
-                        obscureText: true,
+                        obscureText: obscurePassword,
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _handleLogin(context),
                       ),
                       const SizedBox(height: 10),
                       Row(
@@ -168,16 +142,10 @@ class _LoginPageState extends State<LoginPage> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      userProvider.isLoading || isLoading
+                      userProvider.isLoading
                           ? const CircularProgressIndicator()
                           : FilledButton(
-                            onPressed: () {
-                              onLoginButtonPressed(
-                                context,
-                                emailController.text,
-                                passwordController.text,
-                              );
-                            },
+                            onPressed: () => _handleLogin(context),
                             style: FilledButton.styleFrom(
                               minimumSize: const Size(double.infinity, 40),
                             ),
@@ -226,42 +194,91 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Future<void> onLoginButtonPressed(
-    BuildContext context,
-    String email,
-    String password,
-  ) async {
+  Future<void> _handleLogin(BuildContext context) async {
+    // Validate inputs
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    debugPrint('_handleLogin: Email: $email, Password: [hidden]');
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text(AppStrings.enterAllFields)));
+      debugPrint('_handleLogin: Empty fields detected');
+      return;
+    }
+
+    // Show loading
     setState(() {
       isLoading = true;
     });
+    debugPrint('_handleLogin: Set isLoading to true');
 
     try {
-      // Utiliser le UserProvider pour la connexion
-      await Provider.of<UserProvider>(
-        context,
-        listen: false,
-      ).signIn(email.trim(), password.trim());
+      debugPrint('_handleLogin: Attempting to sign in...');
+      // Use UserProvider for authentication
+      await context.read<UserProvider>().signIn(email, password);
+      debugPrint('_handleLogin: signIn completed');
 
       // Save credentials if "Remember Me" is checked
       await _saveCredentials();
+      debugPrint('_handleLogin: Credentials saved if needed');
 
-      // Redirect to the main page after successful login
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) {
-            return const WidgetTree();
-          },
-        ),
-        (route) => false,
-      );
+      // Get the current user provider state
+      final userProvider = context.read<UserProvider>();
+      debugPrint('_handleLogin: User status: ${userProvider.status}');
+
+      // Check authentication status properly
+      if (userProvider.status == AuthStatus.authenticated) {
+        debugPrint('_handleLogin: Authentication successful, adding delay');
+        // Ensure Firebase Auth is fully updated by adding a small delay
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // Double-check Firebase authentication state
+        final firebaseUser = FirebaseAuth.instance.currentUser;
+        debugPrint('_handleLogin: Firebase user: ${firebaseUser?.uid}');
+
+        if (firebaseUser != null && mounted) {
+          debugPrint('_handleLogin: Navigating to WidgetTree');
+          // Navigate to main app if authenticated
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const WidgetTree()),
+            (route) => false,
+          );
+        } else if (mounted) {
+          debugPrint('_handleLogin: Navigating to CaregiverLoadingPage');
+          // If Firebase auth isn't ready yet, show a loading page temporarily
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CaregiverLoadingPage(),
+            ),
+          );
+        }
+      } else if (userProvider.error != null) {
+        // Show error if there is one
+        debugPrint('_handleLogin: Authentication error: ${userProvider.error}');
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(userProvider.error!)));
+      } else {
+        debugPrint('_handleLogin: No error but not authenticated either');
+      }
     } catch (e) {
-      // L'erreur est déjà gérée par le UserProvider
-      debugPrint('Error: $e');
+      // Show error in case there's an exception not caught by UserProvider
+      debugPrint('Login error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Login error: $e')));
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        debugPrint('_handleLogin: Set isLoading to false');
+      }
     }
   }
 }

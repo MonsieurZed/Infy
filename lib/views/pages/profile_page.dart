@@ -3,9 +3,6 @@ import 'package:infy/data/utils/app_logger.dart';
 import 'package:provider/provider.dart';
 import 'package:infy/data/contants/strings.dart';
 import 'package:infy/data/providers/user_provider.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});

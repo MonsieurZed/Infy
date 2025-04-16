@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:infy/data/contants/constants.dart';
 import 'package:infy/data/providers/user_provider.dart';
+import 'package:infy/data/services/firebase_app_check_service.dart';
 import 'package:infy/private.folder/firebase_options.dart';
 import 'package:infy/views/pages/splash_screen.dart';
 import 'package:provider/provider.dart';
@@ -15,15 +16,34 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:infy/data/services/theme_service.dart';
 
 void main() async {
+  // Ensure Flutter is initialized first
   WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(
     widgetsBinding: WidgetsFlutterBinding.ensureInitialized(),
   );
 
   await initializeDateFormatting(AppConstants.locale, null);
-  if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(options: getFirebaseOptions());
+
+  // Initialize Firebase before any plugin that depends on it
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      debugPrint('Firebase initialized successfully');
+    }
+
+    // Delay slightly to ensure Firebase has fully initialized
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Initialize Firebase App Check with our improved service
+    await FirebaseAppCheckService.initialize();
+  } catch (e) {
+    debugPrint('Error during Firebase initialization: $e');
+    // Continue app execution even if Firebase setup fails
   }
+
+  // Set up orientation and complete splash screen
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((
     _,
   ) async {

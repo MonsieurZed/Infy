@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:infy/data/contants/strings.dart';
 import 'package:infy/data/providers/user_provider.dart';
 import 'package:infy/views/pages/caregivers/login/caregiver_login_page.dart';
@@ -61,42 +60,27 @@ class _CaregiverSignupPageState extends State<CaregiverSignupPage> {
         _lastNameController.text.trim(),
       );
 
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.accountCreated)),
-        );
+      // Check if registration was successful by examining the user's status
+      if (context.read<UserProvider>().status == AuthStatus.authenticated) {
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text(AppStrings.accountCreated)),
+          );
 
-        // Navigate to login page
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
+          // Navigate to login page or directly to the main app
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+            (route) => false,
+          );
+        }
       }
-    } on FirebaseAuthException catch (e) {
-      String errorMessage;
-
-      switch (e.code) {
-        case 'email-already-in-use':
-          errorMessage = AppStrings.emailAlreadyInUse;
-          break;
-        case 'invalid-email':
-          errorMessage = AppStrings.invalidEmailError;
-          break;
-        case 'weak-password':
-          errorMessage = AppStrings.weakPassword;
-          break;
-        default:
-          errorMessage = '${AppStrings.error}: ${e.message}';
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(errorMessage)));
+      // If we're here but not authenticated, UserProvider.error should contain the error
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${AppStrings.error}: $e')));
+      // Error is already handled by UserProvider and displayed via Consumer
+      // Just log the error for debugging
+      debugPrint('Signup error: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -289,12 +273,7 @@ class _CaregiverSignupPageState extends State<CaregiverSignupPage> {
                             const Text(AppStrings.alreadyHaveAccount),
                             TextButton(
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const LoginPage(),
-                                  ),
-                                );
+                                Navigator.pop(context);
                               },
                               child: const Text(AppStrings.loginButton),
                             ),

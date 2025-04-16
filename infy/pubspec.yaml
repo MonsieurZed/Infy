@@ -2,7 +2,7 @@ name: infy
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: "none" # Remove this line if you wish to publish to pub.dev
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -34,42 +34,29 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  cloud_firestore: ^4.13.6
-  firebase_auth: ^4.15.3
-  firebase_core: ^2.24.2
-  firebase_storage: ^11.5.6
-  firebase_app_check: ^0.2.1+8
-  flutter_native_splash: ^2.4.6
-  flutter_image_compress: ^2.4.0
-  geolocator: ^13.0.4
-  image_picker: ^1.1.2
-  lottie: ^3.3.1
-  intl: ^0.20.2
-  provider: ^6.1.4
-  shared_preferences: ^2.5.3
-  url_launcher: ^6.3.1
-  logger: ^2.5.0
-  change_app_package_name: ^1.5.0
-  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
   flutter_lints: ^5.0.0
-  flutter_launcher_icons: ^0.13.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-  assets:
-    - assets/lotties/
-    - assets/images/
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
@@ -100,25 +87,3 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
-flutter_native_splash:
-  color: "#fafafb" # Couleur de fond de l'écran de démarrage
-  image: "assets/images/icon-full.png" # Chemin corrigé vers votre image de splash
-  android: true # Activer pour Android
-  ios: true # Activer pour iOS
-  web: false # Désactiver pour le web (facultatif)
-
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/icon.png" # Utiliser l'icône existante dans vos assets
-  adaptive_icon_background: "#fafafb" # Couleur de fond pour les icônes adaptatives Android
-  adaptive_icon_foreground: "assets/images/icon.png" # Image de premier plan pour les icônes adaptatives
-  min_sdk_android: 21 # SDK minimal pour Android
-  remove_alpha_ios: true # Enlever la transparence pour iOS
-  web:
-    generate: false # Ne pas générer pour le web
-  windows:
-    generate: true # Générer pour Windows
-    icon_size: 48 # Taille de l'icône en pixels
-  macos:
-    generate: true # Générer pour macOS

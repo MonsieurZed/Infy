@@ -1,3 +1,5 @@
+import 'package:infy/private.folder/private.key.dart';
+
 class AppConstants {
   // Date and Locale
   static const String fullTimeFormat = 'EEEE dd MMMM yyyy HH:mm';
@@ -25,6 +27,16 @@ class PrefsString {
 class FirebaseString {
   static const String documentId = 'documentId';
   static const String timestamp = 'timestamp';
+
+  // App configuration (moved to private.folder/private.key.dart)
+  static String get webApiKey => PrivateString.webApiKey;
+  static String get appId => PrivateString.appId;
+  static String get projectId => PrivateString.projectId;
+  static String get packageName => PrivateString.packageName;
+
+  // SHA fingerprints for Android (moved to private.folder/private.key.dart)
+  static String get sha1Debug => PrivateString.sha1Debug;
+  static String get sha1Release => PrivateString.sha1Release;
 
   // Collections
   static const String collectionCares = 'cares';

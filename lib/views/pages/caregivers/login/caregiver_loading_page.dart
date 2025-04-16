@@ -8,14 +8,14 @@ import 'package:infy/data/providers/care_provider.dart';
 import 'package:infy/data/providers/patient_provider.dart';
 import 'package:infy/data/providers/care_item_provider.dart';
 
-class LoadingPage extends StatefulWidget {
-  const LoadingPage({super.key});
+class CaregiverLoadingPage extends StatefulWidget {
+  const CaregiverLoadingPage({super.key});
 
   @override
-  State<LoadingPage> createState() => _LoadingPageState();
+  State<CaregiverLoadingPage> createState() => _CaregiverLoadingPageState();
 }
 
-class _LoadingPageState extends State<LoadingPage> {
+class _CaregiverLoadingPageState extends State<CaregiverLoadingPage> {
   bool _isLoading = true;
 
   @override

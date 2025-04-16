@@ -20,7 +20,7 @@ class UserProvider with ChangeNotifier {
   AuthStatus get status => _status;
   bool get isLoading => _loading;
   String? get error => _error;
-  bool get isAuthenticated => _status == AuthStatus.unauthenticated;
+  bool get isAuthenticated => _status == AuthStatus.authenticated;
 
   // Constructeur qui initialise l'état de l'utilisateur
   UserProvider() {

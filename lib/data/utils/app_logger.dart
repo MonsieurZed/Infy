@@ -33,9 +33,6 @@ class AppLogger {
   }
 
   static void debug(StackTrace stackTrace, String message) {
-    if (kDebugMode) {
-      debugPrint('${stackTrace.toString().split("\n")[1]}: $message');
-    }
-    logger.e('Debugging', stackTrace: stackTrace);
+    debugPrint('${stackTrace.toString().split("\n")[1]}: $message');
   }
 }
