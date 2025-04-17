@@ -12,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:infy/data/class/patient_class.dart';
 import 'package:provider/provider.dart';
 import 'package:infy/data/providers/care_item_provider.dart';
+import 'package:infy/data/providers/image_cache_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
@@ -36,16 +37,17 @@ class _AddEditCarePageState extends State<AddEditCarePage> {
   Map<String, String> _uploadedImageUrls = {};
   bool _isUploading = false;
 
+  // Constants for retry mechanism
+  static const int _maxRetries = 3;
+  static const Duration _initialBackoff = Duration(seconds: 2);
+
   @override
   void initState() {
     super.initState();
 
     // S'assurer que les CareItems sont rechargés depuis Firebase
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<CareItemProvider>(
-        context,
-        listen: false,
-      ).fetchCareItems(reload: true);
+      Provider.of<CareItemProvider>(context, listen: false).fetchCareItems();
     });
 
     if (widget.care != null) {
@@ -61,25 +63,33 @@ class _AddEditCarePageState extends State<AddEditCarePage> {
 
   Future<void> _pickAndUploadImages() async {
     final ImagePicker picker = ImagePicker();
-    final List<XFile> images = await picker.pickMultiImage(imageQuality: 25);
 
-    if (images.isNotEmpty) {
+    try {
+      final List<XFile> images = await picker.pickMultiImage(imageQuality: 25);
+
+      if (images.isEmpty) {
+        return; // Ne rien faire si aucune image n'est sélectionnée
+      }
+
       setState(() {
         _isUploading = true; // Démarre l'animation de chargement
       });
 
-      try {
-        for (var image in images) {
+      for (var image in images) {
+        try {
           final File originalFile = File(image.path);
           final String name =
               "${image.name}_${DateTime.now().millisecondsSinceEpoch}";
           // Compresser l'image originale
           final String compressedPath =
-              '${originalFile.path}_${DateTime.now().millisecondsSinceEpoch}compressed.jpg';
+              '${originalFile.path}_${DateTime.now().millisecondsSinceEpoch}compressed.webp';
           final compressedFile = await FlutterImageCompress.compressAndGetFile(
             originalFile.path,
             compressedPath,
+            minWidth: 1200,
+            minHeight: 1200,
             quality: 50,
+            format: CompressFormat.webp,
           );
 
           if (compressedFile == null) {
@@ -87,49 +97,110 @@ class _AddEditCarePageState extends State<AddEditCarePage> {
           }
 
           // Générer une miniature
-          final String thumbnailPath = '${originalFile.path}_thumbnail.jpg';
+          final String thumbnailPath = '${originalFile.path}_thumbnail.webp';
           final thumbnailFile = await FlutterImageCompress.compressAndGetFile(
             originalFile.path,
             thumbnailPath,
             quality: 5,
             minWidth: 150,
             minHeight: 150,
+            format: CompressFormat.webp,
           );
 
           if (thumbnailFile == null) {
             throw Exception("Error while generating the thumbnail.");
           }
 
-          // Références Firebase Storage
-          final storageRef = FirebaseStorage.instance.ref();
-          final imagesRef = storageRef.child('images/$name');
-          final thumbnailsRef = storageRef.child('thumbnails/${image.name}');
+          // Upload files with retry mechanism
+          final imageUrl = await _uploadFileWithRetry(
+            compressedFile.path,
+            'images/$name',
+            'image/webp',
+          );
 
-          // Upload de l'image compressée
-          await imagesRef.putFile(File(compressedFile.path));
-
-          // Upload de la miniature
-          await thumbnailsRef.putFile(File(thumbnailFile.path));
-
-          // Obtenir les URLs de téléchargement
-          final String imageUrl = await imagesRef.getDownloadURL();
-          final String thumbnailUrl = await thumbnailsRef.getDownloadURL();
+          final thumbnailUrl = await _uploadFileWithRetry(
+            thumbnailFile.path,
+            'thumbnails/${image.name}',
+            'image/webp',
+          );
 
           // Ajouter les URLs à la liste
           setState(() {
             _uploadedImageUrls[thumbnailUrl] = imageUrl;
           });
+        } catch (e) {
+          // Gérer les erreurs par image individuellement
+          var message = 'Erreur lors de l\'upload de l\'image: $e';
+          AppLogger.snackbar(context, message);
+          AppLogger.e(message);
+          // Continuer avec les autres images même si celle-ci échoue
         }
+      }
 
+      if (_uploadedImageUrls.isNotEmpty) {
         AppLogger.snackbar(context, AppStrings.imagesUploadedSuccessfully);
-      } catch (e) {
-        var message = 'Erreur lors de l\'upload des images : $e';
-        AppLogger.snackbar(context, message);
-        AppLogger.e(message);
-      } finally {
+      }
+    } catch (e) {
+      var message = 'Erreur lors de l\'upload des images : $e';
+      AppLogger.snackbar(context, message);
+      AppLogger.e(message);
+    } finally {
+      // Assurer que l'indicateur de chargement est désactivé dans tous les cas
+      if (mounted) {
+        // Vérifier si le widget est toujours monté
         setState(() {
-          _isUploading = false; // Arrête l'animation de chargement
+          _isUploading = false;
         });
+      }
+    }
+  }
+
+  /// Upload a file to Firebase Storage with exponential backoff retry mechanism
+  Future<String> _uploadFileWithRetry(
+    String filePath,
+    String storagePath,
+    String contentType, {
+    int attempt = 1,
+  }) async {
+    try {
+      // Create Firebase Storage reference
+      final storageRef = FirebaseStorage.instance.ref();
+      final fileRef = storageRef.child(storagePath);
+
+      // Create metadata
+      final metadata = SettableMetadata(
+        contentType: contentType,
+        customMetadata: {'picked-file-path': filePath},
+      );
+
+      // Upload file
+      await fileRef.putFile(File(filePath), metadata);
+
+      // Return download URL
+      return await fileRef.getDownloadURL();
+    } catch (e) {
+      // Check if this is an App Check token error
+      if (e.toString().contains('Too many attempts') && attempt < _maxRetries) {
+        // Calculate exponential backoff time
+        final backoffTime = _initialBackoff * (attempt * 2);
+
+        AppLogger.e(
+          'App Check token error. Retrying upload in ${backoffTime.inSeconds} seconds (attempt $attempt/$_maxRetries)',
+        );
+
+        // Wait with exponential backoff
+        await Future.delayed(backoffTime);
+
+        // Retry with increased attempt count
+        return _uploadFileWithRetry(
+          filePath,
+          storagePath,
+          contentType,
+          attempt: attempt + 1,
+        );
+      } else {
+        // Rethrow other errors or if max retries reached
+        rethrow;
       }
     }
   }

@@ -7,8 +7,8 @@ import 'package:infy/data/class/care_class.dart';
 import 'package:infy/views/pages/caregivers/care/care_detail_page.dart';
 import 'package:infy/data/class/patient_class.dart';
 
-class PatientPatientWidget extends StatelessWidget {
-  const PatientPatientWidget({
+class PatientCareWidget extends StatelessWidget {
+  const PatientCareWidget({
     super.key,
     required this.care,
     this.patient,

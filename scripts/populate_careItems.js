@@ -1,7 +1,7 @@
 const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const { initializeApp } = require("firebase/app");
 const { getFirestore, collection, doc, setDoc, writeBatch } = require("firebase/firestore");
-const firebaseConfig = require("./private.firebase_config");
+a;
 // Initialiser Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);

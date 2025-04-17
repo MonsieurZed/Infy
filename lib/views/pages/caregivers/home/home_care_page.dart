@@ -5,7 +5,7 @@ import 'package:infy/data/providers/patient_provider.dart';
 import 'package:infy/data/contants/strings.dart';
 import 'package:intl/intl.dart';
 import 'package:infy/data/class/patient_class.dart';
-import 'package:infy/views/pages/caregivers/home/widget/home_care_widget.dart';
+import 'package:infy/views/widgets/care_card_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:infy/data/providers/care_provider.dart';
 import 'package:intl/date_symbol_data_local.dart'; // For initializeDateFormatting
@@ -183,9 +183,10 @@ class _CarePageState extends State<CarePage> {
                                           ),
                                         );
                                       },
-                                      child: HomeCareWidget(
+                                      child: CareCard(
                                         care: care,
                                         patient: patient ?? Patient.empty(),
+                                        showPatientName: true,
                                       ),
                                     );
                                   }

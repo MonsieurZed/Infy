@@ -3,9 +3,9 @@ import 'package:infy/data/class/care_class.dart';
 import 'package:infy/data/class/patient_class.dart';
 import 'package:infy/data/contants/constants.dart';
 import 'package:infy/data/contants/strings.dart';
-import 'package:infy/views/pages/caregivers/patient/widget/patient_patient_widget.dart';
+import 'package:infy/views/pages/caregivers/home/widget/home_care_widget.dart';
 import 'package:infy/views/pages/caregivers/patient/patient_addedit_page.dart';
-import 'package:infy/views/pages/caregivers/care/care_addedit_page.dart'; // Added import for AddEditCarePage
+import 'package:infy/views/pages/caregivers/care/care_addedit_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -265,7 +265,7 @@ class _ShowPatientPageState extends State<ShowPatientPage> {
                         itemCount: _cares.length,
                         itemBuilder: (context, index) {
                           final care = _cares[index];
-                          return PatientPatientWidget(
+                          return CareCard(
                             care: care,
                             patientId: widget.patientId,
                           );

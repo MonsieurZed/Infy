@@ -35,6 +35,7 @@ class _CaregiverSignupPageState extends State<CaregiverSignupPage> {
   }
 
   Future<void> _onSignupButtonPressed() async {
+    // Validate form before showing loading indicator
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -47,20 +48,26 @@ class _CaregiverSignupPageState extends State<CaregiverSignupPage> {
       return;
     }
 
+    // Prepare data before showing loading indicator to minimize main thread work
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+
+    // Now show loading indicator after prep work is done
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Use the UserProvider to register
-      await Provider.of<UserProvider>(context, listen: false).signUp(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-        _firstNameController.text.trim(),
-        _lastNameController.text.trim(),
-      );
+      // Use the UserProvider to register with prepared data
+      await Provider.of<UserProvider>(
+        context,
+        listen: false,
+      ).signUp(email, password, firstName, lastName);
 
       // Check if registration was successful by examining the user's status
+      // Use context.read instead of Provider.of for a more efficient lookup
       if (context.read<UserProvider>().status == AuthStatus.authenticated) {
         // Show success message
         if (mounted) {

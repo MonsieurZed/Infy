@@ -17,6 +17,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final _lastNameController = TextEditingController();
 
   bool _isInitialized = false;
+  bool _isSaving = false;
 
   @override
   void didChangeDependencies() {
@@ -47,9 +48,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _saveProfile() async {
+    // Validate form first and return early if invalid, before any UI update
     if (!_formKey.currentState!.validate()) return;
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+
+    // Get user provider with listen: false to avoid rebuilds
+    final userProvider = context.read<UserProvider>();
     final user = userProvider.user;
 
     if (user == null) {
@@ -57,10 +63,16 @@ class _ProfilePageState extends State<ProfilePage> {
       return;
     }
 
+    // Show loading indicator only after validation is complete
+    setState(() {
+      _isSaving = true;
+    });
+
     try {
+      // Use isolated operation for profile update
       await userProvider.updateUserProfile(
-        firstName: _firstNameController.text,
-        lastName: _lastNameController.text,
+        firstName: firstName,
+        lastName: lastName,
       );
 
       if (mounted) {
@@ -73,6 +85,12 @@ class _ProfilePageState extends State<ProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${AppStrings.errorUpdatingProfile}: $e')),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
       }
     }
   }

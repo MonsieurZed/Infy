@@ -178,4 +178,10 @@ class AppStrings {
   static const String confirmDeletionMessage =
       'Are you sure you want to delete this care?';
   static const String deleteButton = 'Delete';
+
+  // Image Viewer
+  static const String imageViewerTitle = 'Image';
+  static const String closeButton = 'Fermer';
+  static const String previousImage = 'Image précédente';
+  static const String nextImage = 'Image suivante';
 }

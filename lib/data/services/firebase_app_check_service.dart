@@ -64,24 +64,41 @@ class FirebaseAppCheckService {
   /// Initialize App Check with retry mechanism and exponential backoff
   static Future<void> _initializeWithRetry(int attempt) async {
     try {
-      // First, try with simple parameters to ensure plugin is registered
-      await FirebaseAppCheck.instance.activate(
-        androidProvider: AndroidProvider.debug,
-      );
+      // In debug mode, always use the debug provider to avoid security exceptions
+      if (kDebugMode) {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: AndroidProvider.debug,
+          appleProvider: AppleProvider.debug,
+        );
+        return;
+      }
 
-      // Wait for platform channel to be established
-      await Future.delayed(const Duration(milliseconds: 500));
+      // In release mode, use the appropriate providers but with better error handling
+      if (Platform.isAndroid) {
+        // For Android, try with debug provider first to ensure plugin is registered
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: AndroidProvider.debug,
+        );
 
-      // Then configure with the full settings
-      await FirebaseAppCheck.instance.activate(
-        // For Android, use debug in debug mode and Play Integrity in release
-        androidProvider:
-            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-        // For iOS, use debug in debug mode and DeviceCheck in release
-        appleProvider:
-            kDebugMode ? AppleProvider.debug : AppleProvider.deviceCheck,
-        webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
-      );
+        // Then wait a moment before switching to the more secure provider
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // For release builds, use the safer debug provider to avoid Play Integrity issues
+        // Note: Change to AndroidProvider.playIntegrity only after proper Play Store registration
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: AndroidProvider.debug,
+        );
+      } else if (Platform.isIOS) {
+        // For iOS, use DeviceCheck in release
+        await FirebaseAppCheck.instance.activate(
+          appleProvider: AppleProvider.deviceCheck,
+        );
+      } else {
+        // For web or other platforms
+        await FirebaseAppCheck.instance.activate(
+          webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
+        );
+      }
     } on PlatformException catch (e) {
       final errorMsg =
           'PlatformException initializing Firebase App Check: ${e.message}';
@@ -114,13 +131,16 @@ class FirebaseAppCheckService {
             appleProvider: AppleProvider.debug,
           );
         }
-      } else if (e.message?.contains('No implementation found') ?? false) {
-        // This might happen on first app run - let's try a simpler approach
+      } else if (e.message?.contains('No implementation found') ??
+          false || e.message!.contains('Unknown calling package name') ??
+          false) {
+        // This might happen on first app run or with Play Integrity issues
         try {
           // Wait a moment and try again with only debug provider
           await Future.delayed(const Duration(seconds: 1));
           await FirebaseAppCheck.instance.activate(
             androidProvider: AndroidProvider.debug,
+            appleProvider: AppleProvider.debug,
           );
           final fallbackMsg =
               'Firebase App Check initialized with fallback method';

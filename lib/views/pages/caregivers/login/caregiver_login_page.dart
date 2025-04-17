@@ -195,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _handleLogin(BuildContext context) async {
-    // Validate inputs
+    // Validate inputs before showing loading indicator
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
@@ -209,7 +209,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    // Show loading
+    // Show loading only after validation passes
     setState(() {
       isLoading = true;
     });
@@ -225,7 +225,7 @@ class _LoginPageState extends State<LoginPage> {
       await _saveCredentials();
       debugPrint('_handleLogin: Credentials saved if needed');
 
-      // Get the current user provider state
+      // Get the current user provider state using read instead of Provider.of for efficiency
       final userProvider = context.read<UserProvider>();
       debugPrint('_handleLogin: User status: ${userProvider.status}');
 
@@ -233,30 +233,35 @@ class _LoginPageState extends State<LoginPage> {
       if (userProvider.status == AuthStatus.authenticated) {
         debugPrint('_handleLogin: Authentication successful, adding delay');
         // Ensure Firebase Auth is fully updated by adding a small delay
-        await Future.delayed(const Duration(milliseconds: 500));
+        // Use a Timer instead of Future.delayed to avoid blocking the UI thread
+        Future.microtask(() async {
+          await Future.delayed(const Duration(milliseconds: 500));
 
-        // Double-check Firebase authentication state
-        final firebaseUser = FirebaseAuth.instance.currentUser;
-        debugPrint('_handleLogin: Firebase user: ${firebaseUser?.uid}');
+          if (!mounted) return;
 
-        if (firebaseUser != null && mounted) {
-          debugPrint('_handleLogin: Navigating to WidgetTree');
-          // Navigate to main app if authenticated
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const WidgetTree()),
-            (route) => false,
-          );
-        } else if (mounted) {
-          debugPrint('_handleLogin: Navigating to CaregiverLoadingPage');
-          // If Firebase auth isn't ready yet, show a loading page temporarily
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CaregiverLoadingPage(),
-            ),
-          );
-        }
+          // Double-check Firebase authentication state
+          final firebaseUser = FirebaseAuth.instance.currentUser;
+          debugPrint('_handleLogin: Firebase user: ${firebaseUser?.uid}');
+
+          if (firebaseUser != null && mounted) {
+            debugPrint('_handleLogin: Navigating to WidgetTree');
+            // Navigate to main app if authenticated
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const WidgetTree()),
+              (route) => false,
+            );
+          } else if (mounted) {
+            debugPrint('_handleLogin: Navigating to CaregiverLoadingPage');
+            // If Firebase auth isn't ready yet, show a loading page temporarily
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CaregiverLoadingPage(),
+              ),
+            );
+          }
+        });
       } else if (userProvider.error != null) {
         // Show error if there is one
         debugPrint('_handleLogin: Authentication error: ${userProvider.error}');

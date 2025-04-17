@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:infy/data/contants/constants.dart';
+import 'package:infy/data/providers/image_cache_provider.dart';
 import 'package:infy/data/providers/user_provider.dart';
 import 'package:infy/data/services/firebase_app_check_service.dart';
 import 'package:infy/private.folder/firebase_options.dart';
@@ -71,6 +72,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(create: (_) => CareProvider()),
         ChangeNotifierProvider(create: (_) => PatientProvider()),
         ChangeNotifierProvider(create: (_) => CareItemProvider()),
+        ChangeNotifierProvider(create: (_) => ImageCacheProvider()),
       ],
       child: ValueListenableBuilder<ThemeMode>(
         valueListenable: themeModeNotifier,

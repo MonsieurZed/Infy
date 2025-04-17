@@ -8,6 +8,7 @@ import 'package:infy/data/contants/strings.dart';
 import 'package:infy/data/utils/app_logger.dart';
 import 'package:infy/views/pages/caregivers/care/care_addedit_page.dart';
 import 'package:infy/views/pages/caregivers/widget/care_chip.dart';
+import 'package:infy/views/widgets/image_viewer.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -274,45 +275,83 @@ class _DetailCarePageState extends State<DetailCarePage> {
                             Wrap(
                               spacing: 8.0,
                               runSpacing: 8.0,
-                              children:
-                                  care.images.entries.map((entry) {
-                                    final url = entry.key;
-                                    return GestureDetector(
-                                      onTap: () {
-                                        // Affiche l'URL de l'image dans une boîte de dialogue
-                                        showDialog(
-                                          context: context,
-                                          builder:
-                                              (context) => AlertDialog(
-                                                content: Image.network(
-                                                  entry.value,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed:
-                                                        () => Navigator.pop(
-                                                          context,
-                                                        ),
-                                                    child: const Text('Fermer'),
-                                                  ),
-                                                ],
-                                              ),
-                                        );
-                                      },
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(
-                                          8.0,
-                                        ),
-                                        child: Image.network(
-                                          url,
-                                          height: 100,
-                                          width: 100,
-                                          fit: BoxFit.cover,
-                                        ),
+                              children: List.generate(care.images.length, (
+                                index,
+                              ) {
+                                final thumbnailUrl = care.images.keys.elementAt(
+                                  index,
+                                );
+                                return GestureDetector(
+                                  onTap: () {
+                                    // Ouvre le visualiseur d'image plein écran
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => ImageViewer(
+                                              imageUrls:
+                                                  care.images.values.toList(),
+                                              initialIndex: index,
+                                            ),
                                       ),
                                     );
-                                  }).toList(),
+                                  },
+                                  child: Hero(
+                                    tag: 'image_$index',
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: Image.network(
+                                        thumbnailUrl,
+                                        height: 100,
+                                        width: 100,
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (
+                                          context,
+                                          child,
+                                          loadingProgress,
+                                        ) {
+                                          if (loadingProgress == null) {
+                                            return child;
+                                          }
+                                          return Container(
+                                            height: 100,
+                                            width: 100,
+                                            color: Colors.grey[300],
+                                            child: Center(
+                                              child: CircularProgressIndicator(
+                                                value:
+                                                    loadingProgress
+                                                                .expectedTotalBytes !=
+                                                            null
+                                                        ? loadingProgress
+                                                                .cumulativeBytesLoaded /
+                                                            loadingProgress
+                                                                .expectedTotalBytes!
+                                                        : null,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder: (
+                                          context,
+                                          error,
+                                          stackTrace,
+                                        ) {
+                                          return Container(
+                                            height: 100,
+                                            width: 100,
+                                            color: Colors.grey[300],
+                                            child: const Icon(
+                                              Icons.broken_image,
+                                              size: 40,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
                             ),
                           ],
                         ),
